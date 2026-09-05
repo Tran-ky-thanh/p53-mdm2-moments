@@ -1,0 +1,8 @@
+numpy>=1.20
+scipy>=1.6
+matplotlib>=3.3
+numba>=0.53
+scikit-learn>=0.24
+sympy>=1.8
+dcor>=0.6
+# Optional (only for the real-data step 7a): reading 10x matrix.mtx uses scipy.io.mmread

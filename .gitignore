@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# Run logs
+run_*.log
+
+# Regenerable simulation caches (re-created by running the step scripts; RECOMPUTE=1 to force)
+data/cache_step*.npz
+# NOTE: data/data_step7_panel*.npz ARE committed on purpose — they are compact extracts of the
+# MIX-seq real data and cannot be regenerated without the ~2 GB raw dataset (not shipped here).
+# figures/*.png and report/report.html ARE committed (they are the deliverables).
+
+# Real scRNA-seq data (large; download separately, see README)
+10298696/
+10298696.zip
+*.mtx
+
+# OS
+.DS_Store
+Thumbs.db
