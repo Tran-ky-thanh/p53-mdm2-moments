@@ -146,7 +146,25 @@ def plot(D_):
     ax.set_ylabel('correlation')
     ax.set_title("(E) Real data: partial correlation barely drops\n(imperfect mRNA proxy of p53 => inconclusive)")
     ax.grid(alpha=.3, axis='y')
-    axs[2, 1].axis('off')
+    # Panel F: endpoint summary of the synthetic Nutlin simulation, matching
+    # the bar-chart presentation of the real-data panel E.
+    ax = axs[2, 1]
+    endpoint = s3[-1]
+    xpos = np.arange(3)
+    ax.bar(xpos, endpoint, color=['C0', 'C1', 'C3'])
+    ax.axhline(0, color='gray', lw=0.8)
+    ax.set_xticks(xpos)
+    ax.set_xticklabels(['marginal', 'partial |\nTP53 mRNA',
+                        'partial |\np53 protein history'])
+    ax.set_ylabel('correlation')
+    ax.set_ylim(-0.06, 0.06)
+    ax.set_title(f"(F) Simulated Nutlin data at t={t3[-1]:.0f} min:\n"
+                 "marginal versus partial correlation")
+    ax.grid(alpha=.3, axis='y')
+    for xj, value in zip(xpos, endpoint):
+        va = 'bottom' if value >= 0 else 'top'
+        offset = 0.002 if value >= 0 else -0.002
+        ax.text(xj, value + offset, f'{value:+.3f}', ha='center', va=va, fontsize=10)
     fig.suptitle("Step 9 - Directional and conditional dependence for the p53-MDM2 mRNA pair\n"
                  f"[N={N_CELLS} cells per condition]", fontsize=15)
     fig.tight_layout(rect=[0, 0, 1, 0.96])
