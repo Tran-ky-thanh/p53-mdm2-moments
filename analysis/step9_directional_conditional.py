@@ -128,16 +128,15 @@ def plot(D_):
     ax.grid(alpha=.3, axis='y')
     rm, rp = D_['real']
     ax = axs[1, 1]
-    t3 = D_['fork3_times']; s3 = D_['fork3_stats']
+    t3 = D_['fork3_times']; logfc3 = D_['fork3_mean_logfc']
     ax.axhline(0, color='gray', lw=0.8)
-    ax.plot(t3[1:], s3[1:, 0], 'o-', label='corr(MDM2, CDKN1A)')
-    ax.plot(t3[1:], s3[1:, 1], 's-', label='partial | TP53 mRNA')
-    ax.plot(t3[1:], s3[1:, 2], '^-', label='partial | p53 protein history')
-    ax.set_ylabel('correlation')
+    ax.plot(t3, logfc3[0], 'o-', lw=2.6, color='C3', label='p53 protein')
+    ax.plot(t3, logfc3[1], 'o-', lw=2.6, color='C0', label='MDM2 mRNA')
+    ax.plot(t3, logfc3[2], 'o-', lw=2.6, color='C2', label='CDKN1A mRNA')
     ax.set_xlabel('time after Nutlin (min)')
-    ax.set_ylim(-0.06, 0.06)
-    ax.set_title("(D) Six-species Nutlin simulation:\n"
-                 "p53 protein -> {MDM2, CDKN1A}")
+    ax.set_ylabel('log2 fold-change from t = 0')
+    ax.set_title("(D) Open-loop response under Nutlin:\n"
+                 "p53 accumulates while both target genes remain active")
     ax.legend(fontsize=8)
     ax.grid(alpha=.3, axis='y')
     # Panel E: synthetic two-bar reference. Each cell is
@@ -180,8 +179,15 @@ def main():
         print("Missing three-gene cache - run analysis/step9b_three_gene_nutlin.py first.")
         return
     with np.load(THREE_GENE_CACHE, allow_pickle=True) as s3:
-        D_['fork3_stats'] = s3['stats']
         D_['fork3_times'] = s3['times']
+        species = {str(name): i for i, name in enumerate(s3['species'])}
+        trajectories = s3['trajectories']
+        means = np.array([
+            trajectories[:, species['p53'], :].mean(axis=0),
+            trajectories[:, species['Mdm2_mRNA'], :].mean(axis=0),
+            trajectories[:, species['CDKN1A_mRNA'], :].mean(axis=0),
+        ])
+        D_['fork3_mean_logfc'] = np.log2((means + 1.0) / (means[:, :1] + 1.0))
         D_['fork3_snapshot_stats'] = s3['snapshot_stats']
     plot(D_)
 
