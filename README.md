@@ -19,6 +19,7 @@ on both **synthetic** and **real** single-cell RNA-seq data.
 | **Vendored MBI** | `src/mbi/` — the original non-linear moment-based inference code (see `src/mbi/ATTRIBUTION.md`) |
 | **Analysis steps** | `analysis/step1..step9` |
 | **Outputs** | `figures/*.png`, `data/*.npz` |
+| **Manuscript figures** | `figures/manuscript/figure1A-E.*` — standalone high-resolution PNG/PDF panels derived from Results 4.1-4.4 |
 | **Docs / report** | `docs/theory.md`, `report/report.html` |
 
 ## The biology in one paragraph
@@ -66,6 +67,14 @@ python analysis/step8_mbi_inference.py
 # rebuild the HTML report after (re)generating figures
 python report/build_report.py
 ```
+
+For manuscript-ready standalone panels from the early simulation results, run:
+
+```bash
+python analysis/manuscript_figure1_panels.py
+```
+
+This writes separate PNG and PDF files to `figures/manuscript/` without embedded panel letters.
 
 Each step caches its (expensive) simulation to `data/cache_stepN.npz` and separates
 `compute()` from `plot()`, so re-running only re-plots (seconds). Force a fresh simulation with
