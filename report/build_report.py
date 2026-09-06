@@ -104,11 +104,12 @@ RESULTS = [
     "The regulatory change is instead written into the higher-order moments: the covariance of the two mRNAs drops from about +10 (closed loop) to approximately 0 (Nutlin), and the skewness of MDM2 mRNA falls markedly. This is a direct, quantitative illustration of the central thesis of Raharinirina et al. (2021): the signature of regulation is distributed across mean, covariance and skewness rather than being captured by the mean alone."]),
  dict(sid="r4", num="4.4", fig="fig_step4_figure3_style.png", fign=4,
    title="Joint distribution and moment dynamics of the (p53, MDM2) mRNA pair",
-   samples="<b>4000 cells per condition</b>; the scatter panels show a snapshot at t = 300 min.",
-   caption="Single-cell joint distribution of p53 and MDM2 mRNA with density contours and the population mean trajectory (orange), for the closed loop (A) and Nutlin-3 (B); mean counts (C), covariance (D) and skewness (E, F) over time. This presentation parallels the moment-based summaries of Raharinirina et al. (2021).",
+   samples="<b>4000 cells per condition</b>, with all four dynamic species initialized at zero; 301 raw snapshots every 4 min from 0 to 1200 min. Panels A-B show the t = 300 min population. The raw moment series are stored in <code>data/cache_step4_zero_initial.npz</code>.",
+   caption="Single-cell joint distribution of p53 and MDM2 mRNA with smoothed density contours and the population mean trajectory (orange), for the closed loop (A) and Nutlin-3 (B); mean counts (C), covariance (D) and skewness (E, F) over time. As in Figure 3 of Raharinirina et al. (2021), the orange trajectory begins at zero expression. Curves are smoothed only for display (Savitzky-Golay; PCHIP for the orange path); all reported statistics and cached values remain the unsmoothed 4000-cell estimates.",
    interp=[
-    "In the closed loop the joint cloud is tilted along a positive diagonal (covariance +10.5, correlation +0.43): cells rich in p53 mRNA also tend to be rich in MDM2 mRNA, the fingerprint of an intact transcriptional coupling. Under Nutlin the cloud becomes round and shifts upward (covariance approximately 0, correlation approximately 0), with MDM2 mRNA elevated&mdash;dependence is lost even though the marginal level of MDM2 mRNA is higher.",
-    "Panel C again shows that the two solid p53-mRNA curves coincide, underscoring that the discriminating information lies in the second- and third-order statistics (D-F), not in the first-order mean of p53 mRNA."]),
+    "In the closed loop the joint cloud is tilted along a positive diagonal (covariance +10.8, correlation +0.43): cells rich in p53 mRNA also tend to be rich in MDM2 mRNA, the fingerprint of an intact transcriptional coupling. Under Nutlin the cloud becomes round and shifts upward (covariance -0.4, correlation -0.01, both effectively zero), with MDM2 mRNA elevated&mdash;dependence is lost even though the marginal level of MDM2 mRNA is higher.",
+    "Why did the previous version not begin at zero? It inherited the model's basal starting state (15 TP53 mRNAs, 30 p53 proteins, 20 MDM2 mRNAs and 50 MDM2 proteins). Moreover, 15 is exactly the mean steady-state TP53-mRNA count implied by constitutive transcription and decay: dE[m<sub>P</sub>]/dt = 3.0 - 0.20E[m<sub>P</sub>], which equals zero at E[m<sub>P</sub>] = 15. The old green marker therefore correctly appeared at (15,20), and TP53 mRNA had no initial mean change, but that did not reproduce the visual experiment in Patterns2021. The revised Figure 4 instead starts (TP53 mRNA, p53 protein, MDM2 mRNA, MDM2 protein) = (0,0,0,0). Its expected TP53-mRNA start-up is E[m<sub>P</sub>](t) = 15(1 - exp[-0.20t]), so it rises immediately from zero toward 15 counts. This zero start is a deliberate start-up experiment for Figure 4, not a claim that a treated biological cell contains no p53 or MDM2 at baseline.",
+    "Panel C shows that after the start-up transient the two solid p53-mRNA curves coincide, underscoring that the discriminating information lies in the second- and third-order statistics (D-F), not in the first-order mean of p53 mRNA."]),
  dict(sid="r5", num="4.5", fig="fig_step5_noise_association.png", fign=5,
    title="Detecting statistical dependence under dropout: correlation, mutual information and HSIC",
    samples="<b>4000 cells per condition</b>; snapshot at t = 600 min; five capture efficiencies &times; six independent noise draws each.",
@@ -150,9 +151,12 @@ RESULTS = [
       fig="fig_step7e_across_lines.png", fign=10,
       samples="All <b>22 MIX-seq cell lines with &ge; 40 QC-passing cells in both DMSO and idasanutlin</b> (6 h). "
               "For each line: p53 response = mean induction of MDM2 + CDKN1A (idasanutlin minus DMSO, log-norm); "
-              "dCor gain = distance correlation of (MDM2, CDKN1A) in idasanutlin minus in DMSO.",
+              "dCor gain = distance correlation of (MDM2, CDKN1A) in idasanutlin minus in DMSO. Marker area is "
+              "linearly proportional to the total number of QC-passing cells for that line across both conditions.",
       caption="One point per cell line: p53 response (x-axis) versus the gain in MDM2-CDKN1A co-expression "
-              "under idasanutlin (y-axis), with a linear trend fitted across all 22 lines.",
+              "under idasanutlin (y-axis), with a linear trend fitted across all 22 lines. Point area represents "
+              "the number of cells retained after preprocessing in DMSO plus idasanutlin; the size legend gives "
+              "the minimum, median and maximum totals.",
       interp=[
        "There is a positive association (r = +0.44): lines whose p53 targets are induced more strongly by idasanutlin also tend to gain more MDM2-CDKN1A co-expression, consistent with the mechanism above. LNCaP, the wild-type line used throughout this section, sits at the extreme of both axes and is the cleanest example in the panel; CCFSTTG1, NCIH226 and DKMG (moderate p53 response) also show a modest positive gain.",
        "The relationship is noisy, however, and we report it as such rather than overstating it. Two lines with almost no p53 response (RCM1, BT549) show large <i>negative</i> dCor changes, most likely small-sample or line-specific noise rather than a p53-related effect, and they visibly pull down the correlation. With only 22 lines and per-line cell counts of a few hundred, this trend should be read as supportive but not as strong independent confirmation; it motivates, rather than replaces, the single-line analysis with its 2x2 biological control."]),
@@ -303,6 +307,10 @@ transcription is activated by p53 (Hill function); p53 degradation by MDM2 is sa
 (Michaelis-Menten). Nutlin efficacy scales the degradation rate by (1 - nutlin).</p>
 <div class="formula">MDM2 transcription (arm 1):  k<sub>txn</sub> P^n / (K<sub>d</sub>^n + P^n)        (P = p53)
 p53 degradation (arm 2):     (1 - nutlin) k<sub>deg</sub> D P / (K<sub>m</sub> + P)   (D = MDM2)</div>
+<p>Unless a result states otherwise, the four-species simulations start from the basal state
+(TP53 mRNA, p53 protein, MDM2 mRNA, MDM2 protein) = (15, 30, 20, 50). Figure 4 is the explicit
+exception: to reproduce the start-up visualization in Figure 3 of Raharinirina et al. (2021), all
+four species begin at zero and the mean-expression path therefore starts at the origin.</p>
 
 <h4>Three-gene p53-MDM2-CDKN1A extension used in Figure 13D-E</h4>
 <p>To test whether conditioning can separate a common-driver correlation from a direct regulatory

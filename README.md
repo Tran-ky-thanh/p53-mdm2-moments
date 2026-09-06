@@ -38,12 +38,14 @@ binds the p53-pocket of MDM2, blocks MDM2→p53 degradation, so p53 **accumulate
 1b. **step1b** – validate `fast_ssa` ≡ `ssa.py` (identical propensities/stoichiometry).
 2. **step2** – Nutlin dose response (p53↑, MDM2 mRNA↑, oscillation↓).
 3. **step3** – higher-order moments (mean/covariance/skewness) of the (p53, MDM2) mRNA pair.
-4. **step4** – Figure-3-style plots (snapshot scatter + moment time courses).
+4. **step4** – Figure-3-style plots with a zero-expression initial state, matching the
+   Patterns2021 visualization (snapshot scatter + smoothed display of raw cached moment time courses).
 5. **step5** – add simple dropout noise, compare Pearson / MI / HSIC.
 6. **step6** – **published Splatter noise** + Pearson/Spearman/MI/HSIC/**dCor** + permutation tests.
-7. **step7 (a–d)** – **real scRNA-seq** (MIX-seq): load & QC (7a); DMSO vs Idasanutlin with negative
+7. **step7 (a–e)** – **real scRNA-seq** (MIX-seq): load & QC (7a); DMSO vs Idasanutlin with negative
    controls + a WT/mutant 2×2 control (7b); 6 h vs 24 h timepoints (7c); the direct (TP53, MDM2) pair
-   shown honestly to be weak on mRNA (7d).
+   shown honestly to be weak on mRNA (7d); and the response across 22 cell lines, with marker area
+   proportional to each line's QC-passing cell count (7e).
 8. **step8** – the non-linear **MBI** of Raharinirina et al. (2021) recovers the directed edge p53→MDM2 from mRNA moments.
 9. **step9** – make Cor/MI/HSIC/dCor **directional** (lag, Granger, transfer entropy) and separate
    **regulation vs correlation** (partial correlation / conditioning). **step9b** saves a full
