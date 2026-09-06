@@ -46,7 +46,8 @@ binds the p53-pocket of MDM2, blocks MDM2→p53 degradation, so p53 **accumulate
    shown honestly to be weak on mRNA (7d).
 8. **step8** – the non-linear **MBI** of Raharinirina et al. (2021) recovers the directed edge p53→MDM2 from mRNA moments.
 9. **step9** – make Cor/MI/HSIC/dCor **directional** (lag, Granger, transfer entropy) and separate
-   **regulation vs correlation** (partial correlation / conditioning).
+   **regulation vs correlation** (partial correlation / conditioning). **step9b** saves a full
+   six-species p53-MDM2-CDKN1A simulation under Nutlin for Figure 13D and later reuse.
 
 ## Install & run
 

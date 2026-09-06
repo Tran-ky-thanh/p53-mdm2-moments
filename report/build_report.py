@@ -128,47 +128,44 @@ RESULTS = [
    interp=[
     "In the closed loop the true dependence is strongly significant for Pearson (z &approx; 6), Spearman (&approx; 5.5), HSIC (&approx; 12) and distance correlation (&approx; 12); mutual information is the exception (z &approx; 0.7), because the kNN MI estimator is a weak, high-variance detector on discrete count data (Section 4.5).",
     "Under Nutlin-3 the two transcripts are genuinely independent, so every bar there <i>should</i> be zero. Instead Pearson (z &approx; 3.5), Spearman (&approx; 2.9), HSIC (&approx; 3.6) and dCor (&approx; 5.3) are all significant <i>false positives</i>, produced by the shared per-cell library-size factor; only mutual information stays near zero (z &approx; 0.7). The correct reading is therefore not that any one statistic is intrinsically 'robust' &mdash; the powerful measures all detect the library-size artefact, and MI only escapes because of its low power. The real remedy is explicit <b>library-size normalization</b>, which we apply to the experimental data in Section 4.7."]),
- dict(sid="r8", num="4.7", fig="fig_step7_realdata.png", fign=8,
-   title="Validation on experimental scRNA-seq: MIX-seq DMSO versus idasanutlin",
-   samples="Experimental data from MIX-seq (McFarland et al., 2020): <b>1886 (DMSO) and 2634 (idasanutlin) QC-passing singlets</b> across a pool of 24 cell lines; the TP53 wild-type line LNCaP contributes n &approx; 100 / 152 cells; permutation tests use B = 200-300.",
-   caption="Application to real scRNA-seq: DMSO (closed loop) versus idasanutlin, a clinical MDM2 inhibitor of the Nutlin family (open loop), after CP10k + log normalization. (A) induction of p53 target genes in a TP53-wild-type line but not a mutant line; (B, C) MDM2-CDKN1A joint distributions in the wild-type and mutant lines; (D) all five measures on the wild-type MDM2-CDKN1A pair; (E) the 2x2 wild-type/mutant biological control; (F) change in dCor upon treatment across gene pairs.",
-   interp=[
-    "Idasanutlin sharply induces canonical p53 targets (MDM2, CDKN1A, FDXR, ...) in the TP53-wild-type line LNCaP but not in the TP53-mutant line, as expected for a p53-dependent drug (McFarland et al., 2020). Concomitantly, MDM2 and CDKN1A&mdash;two direct p53 targets&mdash;become co-expressed under treatment: dCor rises from 0.12 (not significant) to 0.38 (permutation z &approx; 9). The 2x2 control (E) isolates the p53-dependent effect: only the wild-type + idasanutlin condition shows strong co-regulation, while the drug-treated mutant line does not.",
-    "A caveat is made explicit in panel F: among all gene pairs, only MDM2-CDKN1A gains dependence upon treatment, whereas housekeeping pairs actually lose covariation&mdash;idasanutlin arrests the cell cycle in wild-type cells, removing a global source of gene-gene covariance. Housekeeping pairs are therefore <i>not</i> a perfect negative control in single-cell data; the cleanest control is the isogenic comparison against a non-responding (mutant) line.",
-    "<b>Why not the direct (p53, MDM2) pair, and why does the sign look reversed versus the simulation?</b> Our ideal observable is the loop pair (p53, MDM2), and the simulation uses exactly that. On real scRNA-seq, however, <i>TP53 mRNA</i> is a poor readout of p53 <i>activity</i>: p53 is controlled post-translationally, so its transcript barely moves and does not track the protein that actually drives MDM2 transcription. We therefore read p53 activity through the co-expression of its transcriptional <i>targets</i> (MDM2, CDKN1A). The <i>direction</i> of the drug effect also differs from the simulation for a principled reason: cell-to-cell covariance requires both an active regulatory link <b>and</b> heterogeneity in the upstream driver. In the simulation the baseline (no drug) is an actively cycling loop, so covariance is high at baseline and Nutlin&mdash;by clamping p53&mdash;removes it; in the experiment the baseline (DMSO) is quiescent (low, uniform p53 activity), so target co-expression is low and it is the drug that switches p53 on heterogeneously, creating the co-expression. Same principle, opposite baseline. The next panel shows the direct (TP53, MDM2) pair explicitly."]),
- dict(sid="r8b", num="4.7b", fig="fig_step7d_direct_pair.png", fign=9,
-   title="The direct (TP53, MDM2) pair on real data",
-   samples="WT line LNCaP, 6 h (n=152 treated). dCor of TP53-MDM2 vs MDM2-CDKN1A.",
-   caption="For the wild-type line: (A) mean expression of TP53, MDM2 and CDKN1A in DMSO vs idasanutlin; "
-           "(B) scatter of the direct loop pair TP53 mRNA vs MDM2 mRNA; (C) dCor of TP53-MDM2 vs the "
-           "p53-target pair MDM2-CDKN1A in each condition.",
-   interp=[
-    "This panel makes the point of the previous paragraph concrete. (A) TP53 mRNA barely changes with the "
-    "drug (it even dips slightly), while MDM2 and CDKN1A are strongly induced&mdash;confirming that TP53 "
-    "<i>transcript</i> is not a readout of p53 activity. (B) The direct TP53-MDM2 scatter shows little "
-    "structure (dCor 0.07 in DMSO, 0.10 under idasanutlin). (C) The direct pair stays weak in both "
-    "conditions, whereas MDM2-CDKN1A jumps from 0.12 to 0.38. On mRNA-only data the loop's regulatory "
-    "coherence is therefore best read from the p53-target co-expression, not from the nominal (p53, MDM2) "
-    "pair&mdash;an intrinsic limitation of measuring a post-translationally regulated hub at the mRNA level."]),
- dict(sid="r8c", num="4.7c", fig="fig_step7c_timepoints.png", fign=10,
-   title="Timepoint dependence: 6 h versus 24 h of idasanutlin",
-   samples="Idasanutlin was applied at a single saturating concentration (<b>2.5 uM</b>) and assayed at "
-           "<b>6 h and 24 h</b> (MIX-seq has no idasanutlin dose series). WT line LNCaP: 152 vs 102 treated cells.",
-   caption="For the TP53 wild-type line, (A) induction of p53 target genes (idasanutlin minus DMSO) at "
-           "6 h versus 24 h, and (B) MDM2-CDKN1A co-expression (dCor) at the two timepoints.",
-   interp=[
-    "The two readouts move in <i>opposite</i> directions with time. The <b>mean induction</b> of p53 targets "
-    "is generally <b>larger at 24 h</b> (summed log-fold induction 6.6 at 6 h vs 9.4 at 24 h), reflecting continued "
-    "accumulation of target mRNA. In contrast, the <b>cell-to-cell co-expression</b> of MDM2 and CDKN1A is "
-    "<b>stronger at 6 h</b> (dCor 0.38) than at 24 h (0.26).",
-    "This is expected: at 6 h the response is still in its heterogeneous transient, so p53 activity&mdash;and "
-    "hence its targets&mdash;varies markedly from cell to cell, maximizing the covariation our measures detect; "
-    "by 24 h the response has largely saturated and homogenized (and fewer cells are recovered, consistent with "
-    "arrest/apoptosis), so the mean is higher but the covariation is lower. The main analysis (Section 4.7) uses "
-    "the 6 h timepoint, which gives the cleaner co-regulation signal. Note that 'efficacy' in our simulation "
-    "(Section 4.2) is a mechanistic fraction-of-binding-blocked in [0,1], whereas 2.5 uM is a single, near-saturating "
-    "<i>concentration</i>; the two are related monotonically but are not the same quantity."]),
- dict(sid="r9", num="4.8", fig="fig_step8_mbi.png", fign=11,
+ dict(sid="r8", num="4.7", title="Validation on experimental scRNA-seq: MIX-seq DMSO versus idasanutlin",
+   blocks=[
+    dict(sub="Why not the direct (p53, MDM2) pair, and why does the sign look reversed versus the simulation?",
+      fig="fig_step7d_direct_pair.png", fign=8,
+      samples="WT line LNCaP, 6 h (n=152 treated). dCor of TP53-MDM2 vs MDM2-CDKN1A.",
+      caption="For the wild-type line: (A) mean expression of TP53, MDM2 and CDKN1A in DMSO vs idasanutlin; "
+              "(B) scatter of the direct loop pair TP53 mRNA vs MDM2 mRNA; (C) dCor of TP53-MDM2 vs the "
+              "p53-target pair MDM2-CDKN1A in each condition.",
+      interp=[
+       "Our ideal observable is the loop pair (p53, MDM2), and the simulation uses exactly that. On real scRNA-seq, however, <i>TP53 mRNA</i> is a poor readout of p53 <i>activity</i>: p53 is controlled post-translationally, so its transcript barely moves and does not track the protein that actually drives MDM2 transcription. Panel (A) confirms this directly&mdash;TP53 mRNA barely changes with the drug (it even dips slightly), while MDM2 and CDKN1A are strongly induced. Panels (B)-(C) show the direct TP53-MDM2 scatter has little structure (dCor 0.07 in DMSO, 0.10 under idasanutlin) and stays weak in both conditions, whereas the p53-<i>target</i> pair MDM2-CDKN1A jumps from 0.12 to 0.38. On mRNA-only data the loop's regulatory coherence is therefore best read from p53-target co-expression, not from the nominal (p53, MDM2) pair&mdash;an intrinsic limitation of measuring a post-translationally regulated hub at the mRNA level. We use MDM2-CDKN1A for the rest of this section.",
+       "The <i>direction</i> of the drug effect on that pair also differs from the simulation, for a principled reason: cell-to-cell covariance requires both an active regulatory link <b>and</b> heterogeneity in the upstream driver. In the simulation the baseline (no drug) is an actively cycling loop, so covariance is high at baseline and Nutlin&mdash;by clamping p53&mdash;removes it. In the experiment the baseline (DMSO) is quiescent (low, uniform p53 activity), so target co-expression is low, and it is the drug that switches p53 on heterogeneously, creating the co-expression. Same principle, opposite baseline."]),
+    dict(sub=None, fig="fig_step7_realdata.png", fign=9,
+      samples="Experimental data from MIX-seq (McFarland et al., 2020): <b>1886 (DMSO) and 2634 (idasanutlin) QC-passing singlets</b> across a pool of 24 cell lines; the TP53 wild-type line LNCaP contributes n &approx; 100 / 152 cells; permutation tests use B = 200-300.",
+      caption="Application to real scRNA-seq: DMSO (closed loop) versus idasanutlin, a clinical MDM2 inhibitor of the Nutlin family (open loop), after CP10k + log normalization. (A) induction of p53 target genes in a TP53-wild-type line but not a mutant line; (B, C) MDM2-CDKN1A joint distributions in the wild-type and mutant lines; (D) all five measures on the wild-type MDM2-CDKN1A pair; (E) the 2x2 wild-type/mutant biological control; (F) change in dCor upon treatment across gene pairs.",
+      interp=[
+       "Idasanutlin sharply induces canonical p53 targets (MDM2, CDKN1A, FDXR, ...) in the TP53-wild-type line LNCaP but not in the TP53-mutant line, as expected for a p53-dependent drug (McFarland et al., 2020). Concomitantly, MDM2 and CDKN1A&mdash;two direct p53 targets&mdash;become co-expressed under treatment: dCor rises from 0.12 (not significant) to 0.38 (permutation z &approx; 9). The 2x2 control (E) isolates the p53-dependent effect: only the wild-type + idasanutlin condition shows strong co-regulation, while the drug-treated mutant line does not.",
+       "A caveat is made explicit in panel F: among all gene pairs, only MDM2-CDKN1A gains dependence upon treatment, whereas housekeeping pairs actually lose covariation&mdash;idasanutlin arrests the cell cycle in wild-type cells, removing a global source of gene-gene covariance. Housekeeping pairs are therefore <i>not</i> a perfect negative control in single-cell data; the cleanest control is the isogenic comparison against a non-responding (mutant) line."]),
+    dict(sub="Does the effect generalize across cell lines?",
+      fig="fig_step7e_across_lines.png", fign=10,
+      samples="All <b>22 MIX-seq cell lines with &ge; 40 QC-passing cells in both DMSO and idasanutlin</b> (6 h). "
+              "For each line: p53 response = mean induction of MDM2 + CDKN1A (idasanutlin minus DMSO, log-norm); "
+              "dCor gain = distance correlation of (MDM2, CDKN1A) in idasanutlin minus in DMSO.",
+      caption="One point per cell line: p53 response (x-axis) versus the gain in MDM2-CDKN1A co-expression "
+              "under idasanutlin (y-axis), with a linear trend fitted across all 22 lines.",
+      interp=[
+       "There is a positive association (r = +0.44): lines whose p53 targets are induced more strongly by idasanutlin also tend to gain more MDM2-CDKN1A co-expression, consistent with the mechanism above. LNCaP, the wild-type line used throughout this section, sits at the extreme of both axes and is the cleanest example in the panel; CCFSTTG1, NCIH226 and DKMG (moderate p53 response) also show a modest positive gain.",
+       "The relationship is noisy, however, and we report it as such rather than overstating it. Two lines with almost no p53 response (RCM1, BT549) show large <i>negative</i> dCor changes, most likely small-sample or line-specific noise rather than a p53-related effect, and they visibly pull down the correlation. With only 22 lines and per-line cell counts of a few hundred, this trend should be read as supportive but not as strong independent confirmation; it motivates, rather than replaces, the single-line analysis with its 2x2 biological control."]),
+    dict(sub="Timepoint dependence: 6 h versus 24 h of idasanutlin",
+      fig="fig_step7c_timepoints.png", fign=11,
+      samples="Idasanutlin was applied at a single saturating concentration (<b>2.5 uM</b>) and assayed at "
+              "<b>6 h and 24 h</b> (MIX-seq has no idasanutlin dose series). WT line LNCaP: 152 vs 102 treated cells.",
+      caption="For the TP53 wild-type line, (A) induction of p53 target genes (idasanutlin minus DMSO) at "
+              "6 h versus 24 h, and (B) MDM2-CDKN1A co-expression (dCor) at the two timepoints.",
+      interp=[
+       "The two readouts move in <i>opposite</i> directions with time. The <b>mean induction</b> of p53 targets is generally <b>larger at 24 h</b> (summed log-fold induction 6.6 at 6 h vs 9.4 at 24 h), reflecting continued accumulation of target mRNA. In contrast, the <b>cell-to-cell co-expression</b> of MDM2 and CDKN1A is <b>stronger at 6 h</b> (dCor 0.38) than at 24 h (0.26).",
+       "This is expected: at 6 h the response is still in its heterogeneous transient, so p53 activity&mdash;and hence its targets&mdash;varies markedly from cell to cell, maximizing the covariation our measures detect; by 24 h the response has largely saturated and homogenized (and fewer cells are recovered, consistent with arrest/apoptosis), so the mean is higher but the covariation is lower. The rest of this section uses the 6 h timepoint, which gives the cleaner co-regulation signal. Note that 'efficacy' in our simulation (Section 4.2) is a mechanistic fraction-of-binding-blocked in [0,1], whereas 2.5 uM is a single, near-saturating <i>concentration</i>; the two are related monotonically but are not the same quantity."]),
+   ]),
+ dict(sid="r9", num="4.8", fig="fig_step8_mbi.png", fign=12,
    title="Recovering directed regulation from moments: non-linear moment-based inference (Raharinirina et al., 2021)",
    samples="<b>8000 cells per condition</b>; raw moments up to order 3-4; approximately 49 snapshots used for the fit after discarding the transient and subsampling. "
            "<b>Note on noise:</b> the input is <i>clean</i> SSA counts&mdash;they carry the <i>intrinsic</i> (molecular) noise that MBI actually exploits, but <i>no</i> technical scRNA-seq noise (dropout, library size) is applied here. This is a best-case test, as in Raharinirina et al. (2021).",
@@ -177,16 +174,17 @@ RESULTS = [
     "Unlike the symmetric dependence measures of the previous steps, MBI returns a <i>directed</i> network. In the closed loop it cleanly recovers the transcriptional edge p53 &#8594; MDM2 (A&#8594;B = +3.9) and essentially no MDM2 &#8594; p53 edge (B&#8594;A = 0). The absence of an MDM2 &#8594; p53 edge is expected, because the negative arm operates post-translationally on p53 protein and is invisible at the mRNA level. This demonstrates, on our system, the ability of MBI to infer regulatory direction from mRNA moments alone (Raharinirina et al., 2021).",
     "Under Nutlin-3 MBI still recovers a positive p53 &#8594; MDM2 edge (A&#8594;B = +2.0). This is biologically correct: Nutlin blocks the MDM2&ndash;p53 <i>protein</i> interaction, not the transcriptional arm, so p53 continues to drive MDM2 transcription (indeed MDM2 mRNA is elevated). However, the inference is now less clean&mdash;it also reports a spurious MDM2 &#8594; p53 edge (B&#8594;A = -1.1). The reason is identifiability: with the loop open, p53 is clamped at a high, near-constant level and MDM2 mRNA sits on a flat plateau, so the moment time-courses carry little <i>dynamic</i> information for the fit to exploit. MBI is therefore most reliable in the informative, oscillating closed-loop regime; a near-static system yields weaker, noisier network estimates.",
     "Finally, a scope note: MBI works on the moment time-courses and implicitly assumes the <i>observed</i> moments equal the <i>true</i> moments. It de-noises only by averaging over many cells (and by spline-smoothing the higher moments), which suppresses sampling noise&mdash;but it does not model technical scRNA-seq artefacts. Because dropout and library-size shifts distort exactly the higher-order moments MBI relies on (Section 4.6), such technical noise would bias the inference; the clean, intrinsic-noise-only setting here is deliberately a best case."]),
- dict(sid="r10", num="4.9", fig="fig_step9_directional.png", fign=12,
+ dict(sid="r10", num="4.9", fig="fig_step9_directional.png", fign=13,
    title="Endowing dependence measures with direction and conditional specificity",
-   samples="<b>4000 cells per condition</b> (fluctuation window t &ge; 200 min); common-driver model n = 4000; real-data partial correlation on LNCaP (n &approx; 152).",
+   samples="<b>4000 cells per condition</b> for the directional analysis (fluctuation window t &ge; 200 min). Panel D uses a separate <b>4000-cell, six-species p53-MDM2-CDKN1A Gillespie simulation</b> at 4-min snapshots from 0-80 min with Nutlin efficacy = 1; its complete output is saved in <code>data/cache_step9_three_gene_nutlin.npz</code>. Real-data partial correlation uses LNCaP (n &approx; 152).",
    caption="(A) lagged cross-correlation and (B) lagged distance correlation of the detrended p53/MDM2 mRNA "
            "fluctuations, shown for tau &ge; 0 as two directional curves; at positive lag the p53&rarr;MDM2 curve "
            "dominates and peaks near tau &asymp; +4 min while MDM2&rarr;p53 decays, i.e. p53 fluctuations precede "
-           "MDM2. (C) Granger causality and transfer entropy; (D) partial correlation in a common-driver model "
-           "B&larr;A&rarr;C; (E) partial correlation of MDM2-CDKN1A given a p53-activity proxy on real data.",
+           "MDM2. (C) Granger causality and transfer entropy; (D) marginal and partial correlations from an explicit "
+           "p53-MDM2-CDKN1A mRNA/protein simulation under full Nutlin; (E) partial correlation of MDM2-CDKN1A "
+           "given a p53-activity proxy on real data.",
    interp=[
-    "Two ingredients convert the symmetric measures of Sections 4.5-4.6 into causal ones. <b>Direction requires time</b>: using per-cell trajectories, the lagged cross-correlation and lagged distance correlation peak at positive lag for p53&#8594;MDM2 (A leads B), and Granger causality and transfer entropy are strongly asymmetric (Granger A&#8594;B = 0.21 vs B&#8594;A = 0.00; transfer entropy 0.09 vs 0.001 nats), recovering the direction p53&#8594;MDM2. (Because these measures are symmetric, C<sub>B&#8594;A</sub>(&tau;)=C<sub>A&#8594;B</sub>(&minus;&tau;), it is enough to show <i>positive</i> lags only: over &tau; &ge; 0 the two directional curves are genuinely distinct, and the p53&#8594;MDM2 curve exceeding MDM2&#8594;p53 there means p53 fluctuations <i>precede</i> MDM2&mdash;the temporal-precedence signature of p53&#8594;MDM2. The ~4-min peak reflects the transcription/translation delay.) A further advantage of the <i>signed</i> cross-correlation (panel A) is the <b>negative lobe near &tau; &asymp; 16 min</b>: after p53 drives MDM2 up, the negative-feedback arm pulls the system back, giving an anti-correlation (overshoot) at roughly half the loop's oscillation timescale. This lobe is a fingerprint of the closed negative-feedback loop&mdash;it is absent under Nutlin (open loop; grey dashed curve) and, being a change of <i>sign</i>, cannot appear in the non-negative distance correlation of panel B. <b>Separating regulation from correlation requires conditioning</b>: in a common-driver model B&#8592;A&#8594;C&mdash;the classic confounding 'fork' (Pearl, 2009)&mdash;the marginal correlation of 0.76 collapses to a partial correlation of about 0 given A (this illustrative panel D is a synthetic didactic example, not experimental data), on the real data, however, the picture is inconclusive: conditioning MDM2-CDKN1A on a p53-activity proxy barely lowers their correlation (from 0.43 to about 0.40, and no better with a PC1 or multivariate proxy). We do <i>not</i> read this as proof of a direct edge; rather, the mRNA transcripts of p53 targets are a noisy proxy of the protein-level p53 activity that actually drives them, so conditioning under-corrects and leaves <b>residual confounding</b> (a proxy/measurement-error limitation; Kuroki &amp; Pearl, 2014). The clean separation of common-driver from direct regulation is therefore demonstrable here only in the toy model (panel D), not on snapshot mRNA&mdash;consistent with this report's recurring theme that mRNA-only data plus technical noise limit what can be inferred. Partial correlation is nonetheless the standard tool for pruning indirect edges in gene networks (de la Fuente et al., 2004; Sch&auml;fer &amp; Strimmer, 2005).",
+    "Two ingredients convert the symmetric measures of Sections 4.5-4.6 into causal ones. <b>Direction requires time</b>: using per-cell trajectories, the lagged cross-correlation and lagged distance correlation peak at positive lag for p53&#8594;MDM2 (A leads B), and Granger causality and transfer entropy are strongly asymmetric (Granger A&#8594;B = 0.21 vs B&#8594;A = 0.00; transfer entropy 0.09 vs 0.001 nats), recovering the direction p53&#8594;MDM2. (Because these measures are symmetric, C<sub>B&#8594;A</sub>(&tau;)=C<sub>A&#8594;B</sub>(&minus;&tau;), it is enough to show <i>positive</i> lags only: over &tau; &ge; 0 the two directional curves are genuinely distinct, and the p53&#8594;MDM2 curve exceeding MDM2&#8594;p53 there means p53 fluctuations <i>precede</i> MDM2&mdash;the temporal-precedence signature of p53&#8594;MDM2. The ~4-min peak reflects the transcription/translation delay.) A further advantage of the <i>signed</i> cross-correlation (panel A) is the <b>negative lobe near &tau; &asymp; 16 min</b>: after p53 drives MDM2 up, the negative-feedback arm pulls the system back, giving an anti-correlation (overshoot) at roughly half the loop's oscillation timescale. This lobe is <i>consistent with</i> the closed negative-feedback loop&mdash;it is absent under Nutlin (open loop; grey dashed curve) and, being a change of <i>sign</i>, cannot appear in the non-negative distance correlation of panel B. <b>Panel D replaces the abstract common-driver cartoon with an explicit p53-MDM2-CDKN1A simulation.</b> It contains mRNA and protein for all three genes; full Nutlin cuts MDM2-mediated p53 degradation, while p53 protein continues to drive both target transcripts. All three correlations remain near zero during 0-80 min. This is informative rather than a failure: at full inhibition p53 quickly becomes high enough to saturate both Hill transcription functions, leaving little cell-to-cell variation in the shared input. A real regulatory fork can therefore have almost no snapshot correlation when its driver is clamped or saturated. Conditioning cannot reduce a signal that is already absent. On the real data, conditioning MDM2-CDKN1A on an mRNA p53-activity proxy lowers their correlation only slightly (0.43 to 0.38), so it does not establish a direct edge; the proxy does not measure protein-level p53 activity without error (Kuroki &amp; Pearl, 2014). Partial correlation is nonetheless a standard tool for pruning indirect edges in gene networks (de la Fuente et al., 2004; Sch&auml;fer &amp; Strimmer, 2005).",
     "A fundamental limitation applies: these directional estimators require per-cell time series, whereas scRNA-seq destroys each cell at measurement and yields only population snapshots. Direction on real data must therefore come from population moment dynamics (MBI, Section 4.8) or from RNA velocity, rather than from lagged single-cell statistics."]),
 ]
 
@@ -195,16 +193,31 @@ def section_results():
     html = ['<h2 id="results">4. Results</h2>',
             '<p class="lead">Each subsection presents one figure with a formal caption and an '
             'interpretation. Sample sizes are stated in every step.</p>']
+    def render_block(b):
+        if b.get("sub"):
+            html.append(f'<p><b>{b["sub"]}</b></p>')
+        if b.get("samples"):
+            html.append(f'<div class="samples">{b["samples"]}</div>')
+        html.append('<figure>' + img(b["fig"]) +
+                    f'<figcaption><span class="lab">Figure {b["fign"]}.</span> {b["caption"]}</figcaption></figure>'
+                    if b.get("caption") else '<figure>' + img(b["fig"]) + '</figure>')
+        for para in b["interp"]:
+            html.append(f'<p>{para}</p>')
+
     for s in RESULTS:
         if s["title"]:
             html.append(f'<h3 id="{s["sid"]}">{s["num"]}&nbsp; {s["title"]}</h3>')
-        if s.get("samples"):
-            html.append(f'<div class="samples">{s["samples"]}</div>')
-        html.append('<figure>' + img(s["fig"]) +
-                    f'<figcaption><span class="lab">Figure {s["fign"]}.</span> {s["caption"]}</figcaption></figure>'
-                    if s.get("caption") else '<figure>' + img(s["fig"]) + '</figure>')
-        for para in s["interp"]:
-            html.append(f'<p>{para}</p>')
+        if "blocks" in s:
+            for b in s["blocks"]:
+                render_block(b)
+        else:
+            if s.get("samples"):
+                html.append(f'<div class="samples">{s["samples"]}</div>')
+            html.append('<figure>' + img(s["fig"]) +
+                        f'<figcaption><span class="lab">Figure {s["fign"]}.</span> {s["caption"]}</figcaption></figure>'
+                        if s.get("caption") else '<figure>' + img(s["fig"]) + '</figure>')
+            for para in s["interp"]:
+                html.append(f'<p>{para}</p>')
     return "\n".join(html)
 
 

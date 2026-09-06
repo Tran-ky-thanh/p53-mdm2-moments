@@ -11,6 +11,9 @@ run_*.log
 
 # Regenerable simulation caches (re-created by running the step scripts; RECOMPUTE=1 to force)
 data/cache_step*.npz
+# Figure 13D is a new analysis dataset, not only a plotting cache: retain all
+# six-species p53-MDM2-CDKN1A trajectories for follow-up analyses.
+!data/cache_step9_three_gene_nutlin.npz
 # NOTE: data/data_step7_panel*.npz ARE committed on purpose — they are compact extracts of the
 # MIX-seq real data and cannot be regenerated without the ~2 GB raw dataset (not shipped here).
 # figures/*.png and report/report.html ARE committed (they are the deliverables).

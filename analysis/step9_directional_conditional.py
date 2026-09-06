@@ -27,6 +27,7 @@ HORIZON = 1000.0
 DT = 2.0
 LATE = 200.0
 LAGS = [-12, -8, -6, -4, -3, -2, -1, 0, 1, 2, 3, 4, 6, 8, 12]
+THREE_GENE_CACHE = DATA / "cache_step9_three_gene_nutlin.npz"
 
 
 def direction(nutlin, seed):
@@ -125,12 +126,19 @@ def plot(D_):
     ax.set_ylabel('directional strength'); ax.legend(fontsize=10)
     ax.set_title("(C) Granger & transfer entropy:\nA->B >> B->A  (direction p53->MDM2)")
     ax.grid(alpha=.3, axis='y')
-    ms, ps = D_['cd']; rm, rp = D_['real']
+    rm, rp = D_['real']
     ax = axs[1, 1]
-    ax.bar([0, 1], [ms, ps], color=['C0', 'C3'])
-    ax.set_xticks([0, 1]); ax.set_xticklabels(['corr(B,C)\nmarginal', 'partial(B,C | A)'])
+    t3 = D_['fork3_times']; s3 = D_['fork3_stats']
+    ax.axhline(0, color='gray', lw=0.8)
+    ax.plot(t3[1:], s3[1:, 0], 'o-', label='corr(MDM2, CDKN1A)')
+    ax.plot(t3[1:], s3[1:, 1], 's-', label='partial | TP53 mRNA')
+    ax.plot(t3[1:], s3[1:, 2], '^-', label='partial | p53 protein history')
     ax.set_ylabel('correlation')
-    ax.set_title("(D) Common driver B<-A->C:\npartial ~ 0 => not a direct edge")
+    ax.set_xlabel('time after Nutlin (min)')
+    ax.set_ylim(-0.06, 0.06)
+    ax.set_title("(D) Six-species Nutlin simulation:\n"
+                 "p53 protein -> {MDM2, CDKN1A}")
+    ax.legend(fontsize=8)
     ax.grid(alpha=.3, axis='y')
     ax = axs[2, 0]
     ax.bar([0, 1], [rm, rp], color=['C0', 'C3'])
@@ -148,6 +156,12 @@ def plot(D_):
 
 def main():
     D_ = load_or_compute(DATA / "cache_step9.npz", compute)
+    if not THREE_GENE_CACHE.exists():
+        print("Missing three-gene cache - run analysis/step9b_three_gene_nutlin.py first.")
+        return
+    with np.load(THREE_GENE_CACHE, allow_pickle=True) as s3:
+        D_['fork3_stats'] = s3['stats']
+        D_['fork3_times'] = s3['times']
     plot(D_)
 
 
