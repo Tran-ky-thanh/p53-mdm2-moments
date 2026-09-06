@@ -79,7 +79,11 @@ def compute():
 def plot(D_):
     plotstyle.apply()
     lags = D_['lags_min']
-    fig, axs = plt.subplots(3, 2, figsize=(13, 15))
+    fig = plt.figure(figsize=(13, 15))
+    gs = fig.add_gridspec(3, 2)
+    axs = np.array([[fig.add_subplot(gs[0, 0]), fig.add_subplot(gs[0, 1])],
+                    [fig.add_subplot(gs[1, 0]), fig.add_subplot(gs[1, 1])]],
+                   dtype=object)
     # Only tau >= 0 is needed: the two directional curves are DISTINCT there
     # (C_BA(tau) = C_AB(-tau)). At positive lag, A->B high while B->A low => A leads B.
     pos = lags >= 0
@@ -154,21 +158,25 @@ def plot(D_):
                  "TP53 mRNA stays flat; p53 protein and its targets rise")
     ax.legend(fontsize=8)
     ax.grid(alpha=.3, axis='y')
-    # Panel E: synthetic clean/noisy reference. Each cell is
+    # Panel E: synthetic clean/noisy and real-data reference. Each synthetic cell is
     # observed once at a different response phase; p53 is the true protein-level
     # common driver in this six-species simulation. The Splatter version adds
     # library-size variation, overdispersion and expression-dependent dropout to
     # the observed target transcripts.
-    ax = axs[2, 0]
-    synthetic = np.r_[D_['fork3_snapshot_stats'], D_['fork3_snapshot_splatter_stats']]
-    xpos = np.arange(4)
-    ax.bar(xpos, synthetic, color=['C0', 'C3', 'C0', 'C3'])
+    ax = fig.add_subplot(gs[2, :])
+    synthetic = np.r_[D_['fork3_snapshot_stats'],
+                      D_['fork3_snapshot_splatter_stats'],
+                      D_['real']]
+    xpos = np.arange(6)
+    ax.bar(xpos, synthetic, color=['C0', 'C3', 'C0', 'C3', 'C0', 'C3'])
     ax.axhline(0, color='gray', lw=0.8)
     ax.set_xticks(xpos)
     ax.set_xticklabels(['clean\ncorr',
                         'clean\npartial | p53',
                         'Splatter\ncorr',
-                        'Splatter\npartial | p53'])
+                        'Splatter\npartial | p53',
+                        'real\ncorr',
+                        'real\npartial | p53-proxy'])
     ax.set_ylabel('correlation')
     ax.set_ylim(-0.08, 0.8)
     if 'fork3_snapshot_splatter_zero_rates' in D_:
@@ -176,19 +184,13 @@ def plot(D_):
                      f"CDKN1A {100 * D_['fork3_snapshot_splatter_zero_rates'][1]:.1f}%")
     else:
         zero_note = "technical noise leaves residual association"
-    ax.set_title("(E) Simulated Nutlin snapshot:\n" + zero_note)
+    ax.set_title("(E) Marginal vs partial correlation:\n"
+                 f"clean synthetic, Splatter-noised synthetic, and real idasanutlin data ({zero_note})")
     ax.grid(alpha=.3, axis='y')
     for xj, value in zip(xpos, synthetic):
         va = 'bottom' if value >= 0 else 'top'
         offset = 0.02 if value >= 0 else -0.02
         ax.text(xj, value + offset, f'{value:+.3f}', ha='center', va=va, fontsize=10)
-    # Panel F: apply the same two-bar comparison to experimental snapshot data.
-    ax = axs[2, 1]
-    ax.bar([0, 1], [rm, rp], color=['C0', 'C3'])
-    ax.set_xticks([0, 1]); ax.set_xticklabels(['corr(MDM2,CDKN1A)', 'partial(.|p53-act)'])
-    ax.set_ylabel('correlation')
-    ax.set_title("(F) Real data: partial correlation barely drops\n(imperfect mRNA proxy of p53 => inconclusive)")
-    ax.grid(alpha=.3, axis='y')
     fig.suptitle("Step 9 - Directional and conditional dependence for the p53-MDM2 mRNA pair\n"
                  f"[N={N_CELLS} cells per condition]", fontsize=15)
     fig.tight_layout(rect=[0, 0, 1, 0.96])
