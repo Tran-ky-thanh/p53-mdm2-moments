@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-STEP 5 - Simple dropout noise + Pearson/Spearman/MI/HSIC/dCor between p53 and MDM2 mRNA.
+STEP 5 - Simple dropout noise + Pearson/MI/HSIC/dCor between p53 and MDM2 mRNA.
 Results cached to data/cache_step5.npz; re-plotting only reloads.
 
 Run:            python analysis/step5_noise_association_methods.py
@@ -29,8 +29,8 @@ BETAS = [1.0, 0.6, 0.3, 0.15, 0.08]
 N_REP = 6
 N_KERNEL = 1200
 CONDS = [(0.0, "CLOSED loop", 'C0'), (1.0, "NUTLIN-3", 'C3')]
-METHODS = ['pearson', 'spearman', 'MI', 'HSIC', 'dCor']
-METHOD_LABEL = {'pearson': 'Pearson correlation', 'spearman': 'Spearman correlation',
+METHODS = ['pearson', 'MI', 'HSIC', 'dCor']
+METHOD_LABEL = {'pearson': 'Pearson correlation',
                 'MI': 'Mutual information (nats)', 'HSIC': 'normalized HSIC',
                 'dCor': 'distance correlation'}
 
@@ -66,8 +66,7 @@ def compute():
 
 def plot(D):
     plotstyle.apply()
-    fig, axs = plt.subplots(3, 2, figsize=(13, 14.5))
-    axes = axs.ravel()
+    fig, axes = plt.subplots(1, 4, figsize=(19, 5.0))
     xpos = np.arange(len(BETAS))
     for ax, m in zip(axes, METHODS):
         for nut, label, col in CONDS:
@@ -75,19 +74,12 @@ def plot(D):
                         marker='o', lw=2.3, ms=6, color=col, capsize=3, label=label)
         ax.axhline(0, color='gray', lw=0.6)
         ax.set_xticks(xpos); ax.set_xticklabels([f"{b:.2f}" for b in BETAS])
-        ax.set_xlabel("capture efficiency beta  (lower = more dropout)")
         ax.set_title(METHOD_LABEL[m], fontsize=13); ax.legend(fontsize=10); ax.grid(alpha=.3)
-    axes[-1].axis('off')
-    axes[-1].text(0.05, 0.72, "Five complementary dependence measures", fontsize=14,
-                  fontweight='bold', transform=axes[-1].transAxes)
-    axes[-1].text(0.05, 0.60,
-                  "Pearson: linear\nSpearman: monotone\nMI / HSIC / dCor: nonlinear\n\n"
-                  "Curves show mean +/- SD across\nsix independent dropout draws.",
-                  fontsize=12, va='top', transform=axes[-1].transAxes)
+    fig.supxlabel("capture efficiency beta  (lower = more dropout)", fontsize=12, y=0.03)
     fig.suptitle(f"Step 5 - Detecting p53<->MDM2 mRNA dependence under simple dropout noise  "
                  f"[N={N_CELLS} cells, snapshot t={T_SNAP:.0f} min, {N_REP} noise draws/point]\n"
-                 "(closed loop = dependent; Nutlin = open loop, dependence ~0)", fontsize=11)
-    fig.tight_layout(rect=[0, 0, 1, 0.95])
+                 "(closed loop = dependent; Nutlin = open loop, dependence ~0)", fontsize=12)
+    fig.tight_layout(rect=[0, 0.08, 1, 0.89])
     fig.savefig(str(FIG / "fig_step5_noise_association.png"), dpi=120)
     print("Saved fig_step5_noise_association.png")
 

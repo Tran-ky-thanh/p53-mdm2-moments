@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-STEP 6 - Published Splatter noise + Pearson/Spearman/MI/HSIC/dCor + permutation tests.
+STEP 6 - Published Splatter noise + Pearson/MI/HSIC/dCor + permutation tests.
 Results cached to data/cache_step6.npz; re-plotting only reloads.
 
 Run:            python analysis/step6_splatter_noise_methods.py
@@ -31,8 +31,8 @@ BCV = 0.5
 N_REP = 5
 PERM_MID = 1.0
 CONDS = [(0.0, "CLOSED loop", 'C0'), (1.0, "NUTLIN-3", 'C3')]
-METHODS = ['pearson', 'spearman', 'MI', 'HSIC', 'dCor']
-MLAB = {'pearson': 'Pearson', 'spearman': 'Spearman', 'MI': 'Mutual Info (nats)',
+METHODS = ['pearson', 'MI', 'HSIC', 'dCor']
+MLAB = {'pearson': 'Pearson', 'MI': 'Mutual Info (nats)',
         'HSIC': 'normalized HSIC', 'dCor': 'distance corr'}
 
 
@@ -80,20 +80,20 @@ def plot(D):
     plotstyle.apply()
     xpos = np.arange(len(DROPOUT_MIDS))
     xlabels = [f"{m:+.0f}\n(~{z*100:.0f}% zero)" for m, z in zip(DROPOUT_MIDS, D['zerofrac'])]
-    fig, axs = plt.subplots(1, 5, figsize=(22, 4.3))
+    fig, axs = plt.subplots(1, 4, figsize=(19, 4.8))
     for ax, m in zip(axs, METHODS):
         for nut, label, col in CONDS:
             ax.errorbar(xpos, D[f'{label}__{m}__mean'], yerr=D[f'{label}__{m}__std'],
                         marker='o', color=col, capsize=3, label=label)
         ax.axhline(0, color='gray', lw=0.6)
         ax.set_xticks(xpos); ax.set_xticklabels(xlabels, fontsize=8)
-        ax.set_xlabel("dropout_mid (Splatter noise ->)")
         ax.set_title(MLAB[m], fontsize=11); ax.legend(fontsize=8); ax.grid(alpha=.3)
+    fig.supxlabel("dropout_mid  (larger = more Splatter dropout)", fontsize=11, y=0.03)
     fig.suptitle(f"Step 6 - scRNA-seq technical noise (Splatter model, Zappia et al. 2017): detecting "
-                 f"p53<->MDM2 mRNA dependence (Pearson/Spearman/MI/HSIC/dCor)\n"
+                 f"p53<->MDM2 mRNA dependence (Pearson/MI/HSIC/dCor)\n"
                  f"[N={N_CELLS} cells, snapshot t={T_SNAP:.0f} min, {N_REP} noise draws/point; "
                  f"HSIC/dCor subsampled to 1000]", fontsize=12)
-    fig.tight_layout(rect=[0, 0, 1, 0.93])
+    fig.tight_layout(rect=[0, 0.08, 1, 0.89])
     fig.savefig(str(FIG / "fig_step6_splatter_methods.png"), dpi=115)
 
     fig, ax = plt.subplots(figsize=(10, 5))

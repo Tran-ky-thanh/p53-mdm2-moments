@@ -40,8 +40,8 @@ binds the p53-pocket of MDM2, blocks MDM2→p53 degradation, so p53 **accumulate
 3. **step3** – higher-order moments (mean/covariance/skewness) of the (p53, MDM2) mRNA pair.
 4. **step4** – Figure-3-style plots with a zero-expression initial state, matching the
    Patterns2021 visualization (snapshot scatter + smoothed display of raw cached moment time courses).
-5. **step5** – add simple dropout noise and compare Pearson / Spearman / MI / HSIC / dCor.
-6. **step6** – **published Splatter noise** + Pearson/Spearman/MI/HSIC/**dCor** + permutation tests.
+5. **step5** – add simple dropout noise and compare Pearson / MI / HSIC / dCor.
+6. **step6** – **published Splatter noise** + Pearson/MI/HSIC/**dCor** + permutation tests.
 7. **step7 (a–e)** – **real scRNA-seq** (MIX-seq): load & QC (7a); DMSO vs Idasanutlin with negative
    controls + a WT/mutant 2×2 control (7b); 6 h vs 24 h timepoints (7c); the direct (TP53, MDM2) pair
    shown honestly to be weak on mRNA (7d); and the response across 22 cell lines, with marker area
@@ -84,7 +84,7 @@ subfolders `DMSO_6hr_expt1/` and `Idasanutlin_6hr_expt1/` (10x `matrix.mtx` + `g
   makes p53 accumulate and abolishes oscillations.
 - The regulatory signal lives in **higher-order moments** (covariance, skewness), not the mean.
 - Under realistic (Splatter) noise, **library-size** creates spurious gene–gene correlations that
-  fool all the powerful measures (Pearson/Spearman/HSIC/dCor); only the low-power kNN mutual-information
+  fool all the powerful measures (Pearson/HSIC/dCor); only the low-power kNN mutual-information
   estimator stays near zero. The real fix is **library-size normalization**, not the choice of statistic.
 - On **real** MIX-seq data, MDM2–CDKN1A co-expression appears **only in TP53-WT cells under
   Idasanutlin** (dCor 0.12→0.38), with a clean mutant-line negative control. (The direct TP53–MDM2 pair

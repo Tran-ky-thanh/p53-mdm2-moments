@@ -106,9 +106,13 @@ def plot(D_):
     axA.plot(lp, abn, '--', lw=1.8, color='gray', label='p53->MDM2  [Nutlin, open loop]')
     kpk = int(np.argmax(ab)); kmin = int(np.argmin(ab))
     axA.plot(lp[kpk], ab[kpk], '*', ms=18, color='crimson', zorder=5, label=f'peak at tau = {lp[kpk]:.0f} min')
+    # Keep the label directly above the minimum: the arrow is vertical and lands
+    # exactly on the negative-lobe point, avoiding the earlier diagonal callout.
     axA.annotate('negative lobe =\nnegative-feedback overshoot\n(closed loop only)',
-                 xy=(lp[kmin], ab[kmin]), xytext=(lp[kmin]-9, 0.22), fontsize=9, color='C3', ha='left',
-                 arrowprops=dict(arrowstyle='->', color='C3', lw=1.5))
+                 xy=(lp[kmin], ab[kmin]), xytext=(lp[kmin], 0.22),
+                 fontsize=9, color='C3', ha='center', va='bottom',
+                 arrowprops=dict(arrowstyle='->', color='C3', lw=1.5,
+                                 connectionstyle='arc3,rad=0'))
     axA.set_xlabel('lag tau >= 0 (min)'); axA.set_ylabel('cross-correlation (fluctuations)')
     axA.set_title("(A) Lagged cross-correlation (closed loop)\np53 leads MDM2; negative lobe = feedback overshoot")
     axA.legend(fontsize=9, loc='upper right'); axA.grid(alpha=.3)
@@ -126,11 +130,15 @@ def plot(D_):
     ax.set_ylim(0, max(forward + reverse) * 1.25)
     ax.legend(fontsize=10)
     ax.set_title("(C) One-step Granger causality:\np53->MDM2 is recovered in the dynamic closed loop")
+    def granger_label(value):
+        # Values below 0.001 are real but would be hidden by fixed 3-decimal rounding.
+        return f'{value:.3f}' if abs(value) >= 1e-3 else f'{value:.2e}'
+
     for bars in (bars_f, bars_r):
         for bar in bars:
             value = bar.get_height()
             ax.text(bar.get_x() + bar.get_width()/2, value + 0.006,
-                    f'{value:.3f}', ha='center', va='bottom', fontsize=9)
+                    granger_label(value), ha='center', va='bottom', fontsize=9)
     ax.grid(alpha=.3, axis='y')
     rm, rp = D_['real']
     ax = axs[1, 1]
