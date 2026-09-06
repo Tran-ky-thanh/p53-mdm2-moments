@@ -140,16 +140,10 @@ def plot(D_):
                  "p53 protein -> {MDM2, CDKN1A}")
     ax.legend(fontsize=8)
     ax.grid(alpha=.3, axis='y')
-    ax = axs[2, 0]
-    ax.bar([0, 1], [rm, rp], color=['C0', 'C3'])
-    ax.set_xticks([0, 1]); ax.set_xticklabels(['corr(MDM2,CDKN1A)', 'partial(.|p53-act)'])
-    ax.set_ylabel('correlation')
-    ax.set_title("(E) Real data: partial correlation barely drops\n(imperfect mRNA proxy of p53 => inconclusive)")
-    ax.grid(alpha=.3, axis='y')
-    # Panel F: two-bar synthetic counterpart of real-data panel E. Each cell is
+    # Panel E: synthetic two-bar reference. Each cell is
     # observed once at a different response phase; p53 is the true protein-level
     # common driver in this six-species simulation.
-    ax = axs[2, 1]
+    ax = axs[2, 0]
     synthetic = D_['fork3_snapshot_stats']
     xpos = np.arange(2)
     ax.bar(xpos, synthetic, color=['C0', 'C3'])
@@ -159,13 +153,20 @@ def plot(D_):
                         'partial(MDM2,CDKN1A | p53)'])
     ax.set_ylabel('correlation')
     ax.set_ylim(-0.08, 0.8)
-    ax.set_title("(F) Simulated Nutlin snapshot:\n"
+    ax.set_title("(E) Simulated Nutlin snapshot:\n"
                  "conditioning removes the common p53 driver")
     ax.grid(alpha=.3, axis='y')
     for xj, value in zip(xpos, synthetic):
         va = 'bottom' if value >= 0 else 'top'
         offset = 0.02 if value >= 0 else -0.02
         ax.text(xj, value + offset, f'{value:+.3f}', ha='center', va=va, fontsize=10)
+    # Panel F: apply the same two-bar comparison to experimental snapshot data.
+    ax = axs[2, 1]
+    ax.bar([0, 1], [rm, rp], color=['C0', 'C3'])
+    ax.set_xticks([0, 1]); ax.set_xticklabels(['corr(MDM2,CDKN1A)', 'partial(.|p53-act)'])
+    ax.set_ylabel('correlation')
+    ax.set_title("(F) Real data: partial correlation barely drops\n(imperfect mRNA proxy of p53 => inconclusive)")
+    ax.grid(alpha=.3, axis='y')
     fig.suptitle("Step 9 - Directional and conditional dependence for the p53-MDM2 mRNA pair\n"
                  f"[N={N_CELLS} cells per condition]", fontsize=15)
     fig.tight_layout(rect=[0, 0, 1, 0.96])
