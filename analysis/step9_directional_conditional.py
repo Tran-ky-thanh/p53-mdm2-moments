@@ -131,12 +131,13 @@ def plot(D_):
     t3 = D_['fork3_times']; logfc3 = D_['fork3_mean_logfc']
     ax.axhline(0, color='gray', lw=0.8)
     ax.plot(t3, logfc3[0], 'o-', lw=2.6, color='C3', label='p53 protein')
-    ax.plot(t3, logfc3[1], 'o-', lw=2.6, color='C0', label='MDM2 mRNA')
-    ax.plot(t3, logfc3[2], 'o-', lw=2.6, color='C2', label='CDKN1A mRNA')
+    ax.plot(t3, logfc3[1], 'o-', lw=2.3, color='C4', label='TP53 mRNA')
+    ax.plot(t3, logfc3[2], 'o-', lw=2.6, color='C0', label='MDM2 mRNA')
+    ax.plot(t3, logfc3[3], 'o-', lw=2.6, color='C2', label='CDKN1A mRNA')
     ax.set_xlabel('time after Nutlin (min)')
     ax.set_ylabel('log2 fold-change from t = 0')
     ax.set_title("(D) Open-loop response under Nutlin:\n"
-                 "p53 accumulates while both target genes remain active")
+                 "TP53 mRNA stays flat; p53 protein and its targets rise")
     ax.legend(fontsize=8)
     ax.grid(alpha=.3, axis='y')
     # Panel E: synthetic two-bar reference. Each cell is
@@ -184,6 +185,7 @@ def main():
         trajectories = s3['trajectories']
         means = np.array([
             trajectories[:, species['p53'], :].mean(axis=0),
+            trajectories[:, species['p53_mRNA'], :].mean(axis=0),
             trajectories[:, species['Mdm2_mRNA'], :].mean(axis=0),
             trajectories[:, species['CDKN1A_mRNA'], :].mean(axis=0),
         ])
