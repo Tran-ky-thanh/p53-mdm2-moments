@@ -154,21 +154,29 @@ def plot(D_):
                  "TP53 mRNA stays flat; p53 protein and its targets rise")
     ax.legend(fontsize=8)
     ax.grid(alpha=.3, axis='y')
-    # Panel E: synthetic two-bar reference. Each cell is
+    # Panel E: synthetic clean/noisy reference. Each cell is
     # observed once at a different response phase; p53 is the true protein-level
-    # common driver in this six-species simulation.
+    # common driver in this six-species simulation. The Splatter version adds
+    # library-size variation, overdispersion and expression-dependent dropout to
+    # the observed target transcripts.
     ax = axs[2, 0]
-    synthetic = D_['fork3_snapshot_stats']
-    xpos = np.arange(2)
-    ax.bar(xpos, synthetic, color=['C0', 'C3'])
+    synthetic = np.r_[D_['fork3_snapshot_stats'], D_['fork3_snapshot_splatter_stats']]
+    xpos = np.arange(4)
+    ax.bar(xpos, synthetic, color=['C0', 'C3', 'C0', 'C3'])
     ax.axhline(0, color='gray', lw=0.8)
     ax.set_xticks(xpos)
-    ax.set_xticklabels(['corr(MDM2,CDKN1A)',
-                        'partial(MDM2,CDKN1A | p53)'])
+    ax.set_xticklabels(['clean\ncorr',
+                        'clean\npartial | p53',
+                        'Splatter\ncorr',
+                        'Splatter\npartial | p53'])
     ax.set_ylabel('correlation')
     ax.set_ylim(-0.08, 0.8)
-    ax.set_title("(E) Simulated Nutlin snapshot:\n"
-                 "conditioning removes the common p53 driver")
+    if 'fork3_snapshot_splatter_zero_rates' in D_:
+        zero_note = (f"Splatter zeros: MDM2 {100 * D_['fork3_snapshot_splatter_zero_rates'][0]:.1f}%, "
+                     f"CDKN1A {100 * D_['fork3_snapshot_splatter_zero_rates'][1]:.1f}%")
+    else:
+        zero_note = "technical noise leaves residual association"
+    ax.set_title("(E) Simulated Nutlin snapshot:\n" + zero_note)
     ax.grid(alpha=.3, axis='y')
     for xj, value in zip(xpos, synthetic):
         va = 'bottom' if value >= 0 else 'top'
@@ -206,6 +214,12 @@ def main():
         ])
         D_['fork3_mean_logfc'] = np.log2((means + 1.0) / (means[:, :1] + 1.0))
         D_['fork3_snapshot_stats'] = s3['snapshot_stats']
+        if 'snapshot_splatter_stats' not in s3:
+            print("Missing Splatter snapshot fields - run analysis/step9b_three_gene_nutlin.py first.")
+            return
+        D_['fork3_snapshot_splatter_stats'] = s3['snapshot_splatter_stats']
+        if 'snapshot_splatter_zero_rates' in s3:
+            D_['fork3_snapshot_splatter_zero_rates'] = s3['snapshot_splatter_zero_rates']
     plot(D_)
 
 

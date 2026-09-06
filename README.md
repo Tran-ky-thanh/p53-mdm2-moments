@@ -49,7 +49,8 @@ binds the p53-pocket of MDM2, blocks MDM2→p53 degradation, so p53 **accumulate
 8. **step8** – the non-linear **MBI** of Raharinirina et al. (2021) recovers the directed edge p53→MDM2 from mRNA moments, with a five-seed robustness summary saved for re-plotting.
 9. **step9** – add **direction** to Cor/dCor using lag and Granger causality, and separate
    **regulation vs correlation** (partial correlation / conditioning). **step9b** saves a full
-   six-species p53-MDM2-CDKN1A simulation under Nutlin for Figure 13D and later reuse.
+   six-species p53-MDM2-CDKN1A simulation under Nutlin for Figure 13D and later reuse, plus a
+   Splatter-noised synthetic snapshot for Figure 13E.
 
 ## Install & run
 

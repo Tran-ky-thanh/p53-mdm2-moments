@@ -19,6 +19,7 @@ DATA = ROOT / "data"
 import numpy as np
 import model_three_gene as M3
 import directional as D
+import association as A
 from cache import load_or_compute
 
 N_CELLS = 4000
@@ -26,6 +27,11 @@ TIMES = np.arange(0.0, 81.0, 4.0)
 NUTLIN = 1.0
 SEED = 93
 SNAPSHOT_SEED = 101
+SPLATTER_SEED = 202
+SPLATTER_LIB_SCALE = 0.35
+SPLATTER_BCV = 0.40
+SPLATTER_DROPOUT_MID = 1.0
+SPLATTER_DROPOUT_SHAPE = -1.0
 CACHE = DATA / "cache_step9_three_gene_nutlin.npz"
 
 
@@ -69,6 +75,43 @@ def asynchronous_snapshot(trajectories, times):
                 snapshot_p53_exposure=exposure, snapshot_stats=summary)
 
 
+def splatter_snapshot(snapshot_mdm2, snapshot_cdkn1a, exposure):
+    """Apply Splatter-style technical noise to the synthetic snapshot targets."""
+    rng = np.random.default_rng(SPLATTER_SEED)
+    clean_counts = np.column_stack([snapshot_mdm2, snapshot_cdkn1a])
+    noisy_counts = A.splatter_noise(clean_counts, rng, lib_scale=SPLATTER_LIB_SCALE,
+                                    bcv=SPLATTER_BCV,
+                                    dropout_mid=SPLATTER_DROPOUT_MID,
+                                    dropout_shape=SPLATTER_DROPOUT_SHAPE)
+    noisy_mdm2 = noisy_counts[:, 0]
+    noisy_cdkn1a = noisy_counts[:, 1]
+    stats = np.array([np.corrcoef(noisy_mdm2, noisy_cdkn1a)[0, 1],
+                      D.partial_corr(noisy_mdm2, noisy_cdkn1a, exposure)])
+    zero_rates = np.array([(noisy_mdm2 == 0).mean(),
+                           (noisy_cdkn1a == 0).mean(),
+                           (noisy_counts == 0).any(axis=1).mean(),
+                           (noisy_counts == 0).all(axis=1).mean()], dtype=float)
+    return dict(snapshot_splatter_counts=noisy_counts,
+                snapshot_splatter_stats=stats,
+                snapshot_splatter_zero_rates=zero_rates,
+                snapshot_splatter_zero_rate_names=np.array([
+                    "MDM2_zero_fraction",
+                    "CDKN1A_zero_fraction",
+                    "any_target_zero_fraction",
+                    "both_targets_zero_fraction"
+                ], dtype=str),
+                snapshot_splatter_seed=np.array([SPLATTER_SEED], dtype=np.int64),
+                snapshot_splatter_params=np.array([
+                    SPLATTER_LIB_SCALE,
+                    SPLATTER_BCV,
+                    SPLATTER_DROPOUT_MID,
+                    SPLATTER_DROPOUT_SHAPE,
+                ], dtype=float),
+                snapshot_splatter_param_names=np.array([
+                    "lib_scale", "bcv", "dropout_mid", "dropout_shape"
+                ], dtype=str))
+
+
 def compute():
     # Import the numba engine only when trajectories actually need recomputing;
     # cached plotting and metadata upgrades therefore need only NumPy.
@@ -92,6 +135,9 @@ def compute():
                n_cells=np.array([N_CELLS]), seed=np.array([SEED]),
                snapshot_seed=np.array([SNAPSHOT_SEED]))
     out.update(asynchronous_snapshot(trajectories, TIMES))
+    out.update(splatter_snapshot(out['snapshot_mdm2_mRNA'],
+                                 out['snapshot_cdkn1a_mRNA'],
+                                 out['snapshot_p53_exposure']))
     out.update(simulation_metadata())
     return out
 
@@ -103,6 +149,11 @@ def main():
         # Upgrade an existing cache without rerunning the expensive SSA simulation.
         out.update(asynchronous_snapshot(out['trajectories'], out['times']))
         out['snapshot_seed'] = np.array([SNAPSHOT_SEED])
+        upgraded = True
+    if 'snapshot_splatter_stats' not in out or 'snapshot_splatter_zero_rates' not in out:
+        out.update(splatter_snapshot(out['snapshot_mdm2_mRNA'],
+                                     out['snapshot_cdkn1a_mRNA'],
+                                     out['snapshot_p53_exposure']))
         upgraded = True
     for key, value in simulation_metadata().items():
         if key not in out:
@@ -120,6 +171,11 @@ def main():
                   f"partial|p53protein-history={out['stats'][i,2]:+.3f}")
     print(f"asynchronous snapshot: marginal={out['snapshot_stats'][0]:+.3f}, "
           f"partial(MDM2,CDKN1A|p53)={out['snapshot_stats'][1]:+.3f}")
+    print(f"splatter snapshot: marginal={out['snapshot_splatter_stats'][0]:+.3f}, "
+          f"partial(MDM2,CDKN1A|p53)={out['snapshot_splatter_stats'][1]:+.3f}")
+    print("splatter zero fractions:",
+          {str(k): round(float(v), 4) for k, v in zip(out['snapshot_splatter_zero_rate_names'],
+                                                      out['snapshot_splatter_zero_rates'])})
 
 
 if __name__ == "__main__":
