@@ -63,5 +63,5 @@ def allMonomialPowers(d, p):
     x = np.zeros(d) # vector containing powers for the monomials, initially zero
     c = [] # matrix containing all powers for the monomials
     for i in range(1, n):
-        c.append(tuple(nextMonomialPowers(x).astype(np.int)))
+        c.append(tuple(nextMonomialPowers(x).astype(int)))
     return c

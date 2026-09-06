@@ -46,7 +46,7 @@ binds the p53-pocket of MDM2, blocks MDM2→p53 degradation, so p53 **accumulate
    controls + a WT/mutant 2×2 control (7b); 6 h vs 24 h timepoints (7c); the direct (TP53, MDM2) pair
    shown honestly to be weak on mRNA (7d); and the response across 22 cell lines, with marker area
    proportional to each line's QC-passing cell count (7e).
-8. **step8** – the non-linear **MBI** of Raharinirina et al. (2021) recovers the directed edge p53→MDM2 from mRNA moments.
+8. **step8** – the non-linear **MBI** of Raharinirina et al. (2021) recovers the directed edge p53→MDM2 from mRNA moments, with a five-seed robustness summary saved for re-plotting.
 9. **step9** – add **direction** to Cor/dCor using lag and Granger causality, and separate
    **regulation vs correlation** (partial correlation / conditioning). **step9b** saves a full
    six-species p53-MDM2-CDKN1A simulation under Nutlin for Figure 13D and later reuse.
@@ -70,6 +70,10 @@ Each step caches its (expensive) simulation to `data/cache_stepN.npz` and separa
 `compute()` from `plot()`, so re-running only re-plots (seconds). Force a fresh simulation with
 `RECOMPUTE=1 python analysis/stepN.py`. The engine is seeded per cell, so a given seed reproduces
 the ensemble exactly.
+
+`analysis/step8_mbi_inference.py` also writes `data/cache_step8_robust.npz`, a compact cache of
+the five independent 2500-cell MBI moment datasets, fitted rates, and inferred networks used for
+Figure 12C-E (mean ± SD).
 
 ### Real-data step (7)
 `analysis/step7a_load_realdata.py` expects the **MIX-seq** dataset (McFarland et al.,

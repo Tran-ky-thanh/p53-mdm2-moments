@@ -91,4 +91,4 @@ def generate_design_blocks(hash_lookUp, Moment_Basis, Verbose=False):
         if Verbose:
             print(Maps)
         
-    return np.array(Reaction_Mapping_Mat).astype(np.float)
+    return np.array(Reaction_Mapping_Mat).astype(float)

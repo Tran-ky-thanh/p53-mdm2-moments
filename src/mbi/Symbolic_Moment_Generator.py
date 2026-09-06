@@ -167,7 +167,7 @@ if __name__ == "__main__":
 						'A + B -> 2B',	#11
 						'A + B -> 2A'	#12
 					]
-	keeps = np.array([0,1,3,6,11],dtype=np.int)
+	keeps = np.array([0,1,3,6,11],dtype=int)
 
 	if len(keeps) > 0:
 		pdb.set_trace()
@@ -209,6 +209,5 @@ if __name__ == "__main__":
 	#	Moment_Obj.Compute_Moment(degrees,hash_lookUp)
 
 	
-
 
 

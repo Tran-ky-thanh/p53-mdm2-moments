@@ -173,13 +173,14 @@ RESULTS = [
    ]),
  dict(sid="r9", num="4.8", fig="fig_step8_mbi.png", fign=12,
    title="Recovering directed regulation from moments: non-linear moment-based inference (Raharinirina et al., 2021)",
-   samples="<b>8000 cells per condition</b>; raw moments up to order 3-4; approximately 49 snapshots used for the fit after discarding the transient and subsampling. "
+   samples="Panels A-B use one <b>8000-cell simulation per condition</b> to show the fitted mean moment dynamics. Panels C-E summarize <b>5 independent seeds &times; 2500 cells per condition</b>; each replicate uses 25 moment snapshots from 20 to 980 min after discarding the first 20 min and subsampling every 40 min. Raw moments up to order 3-4 are used. "
            "<b>Note on noise:</b> the input is <i>clean</i> SSA counts&mdash;they carry the <i>intrinsic</i> (molecular) noise that MBI actually exploits, but <i>no</i> technical scRNA-seq noise (dropout, library size) is applied here. This is a best-case test, as in Raharinirina et al. (2021).",
-   caption="Non-linear moment-based inference (MBI) of Raharinirina et al. (2021), applied to the simulated moment time-courses of the (p53 mRNA, MDM2 mRNA) pair (original code, vendored in src/mbi). Top: model fit to the mean dynamics; middle: the inferred 2x2 regulatory network; bottom: inferred edge strengths.",
+   caption="Non-linear moment-based inference (MBI) of Raharinirina et al. (2021), applied to simulated moment time-courses of the (p53 mRNA, MDM2 mRNA) pair (original code, vendored in src/mbi). A-B: one 8000-cell example fit to the mean dynamics. C-D: inferred 2x2 regulatory networks, shown as mean &plusmn; SD across five independent 2500-cell simulations. E: the two directed edge strengths, again shown as mean &plusmn; SD across seeds.",
    interp=[
-    "Unlike the symmetric dependence measures of the previous steps, MBI returns a <i>directed</i> network. In the closed loop it cleanly recovers the transcriptional edge p53 &#8594; MDM2 (A&#8594;B = +3.9) and essentially no MDM2 &#8594; p53 edge (B&#8594;A = 0). The absence of an MDM2 &#8594; p53 edge is expected, because the negative arm operates post-translationally on p53 protein and is invisible at the mRNA level. This demonstrates, on our system, the ability of MBI to infer regulatory direction from mRNA moments alone (Raharinirina et al., 2021).",
-    "Under Nutlin-3 MBI still recovers a positive p53 &#8594; MDM2 edge (A&#8594;B = +2.0). This is biologically correct: Nutlin blocks the MDM2&ndash;p53 <i>protein</i> interaction, not the transcriptional arm, so p53 continues to drive MDM2 transcription (indeed MDM2 mRNA is elevated). However, the inference is now less clean&mdash;it also reports a spurious MDM2 &#8594; p53 edge (B&#8594;A = -1.1). The reason is identifiability: with the loop open, p53 is clamped at a high, near-constant level and MDM2 mRNA sits on a flat plateau, so the moment time-courses carry little <i>dynamic</i> information for the fit to exploit. MBI is therefore most reliable in the informative, oscillating closed-loop regime; a near-static system yields weaker, noisier network estimates.",
-    "Finally, a scope note: MBI works on the moment time-courses and implicitly assumes the <i>observed</i> moments equal the <i>true</i> moments. It de-noises only by averaging over many cells (and by spline-smoothing the higher moments), which suppresses sampling noise&mdash;but it does not model technical scRNA-seq artefacts. Because dropout and library-size shifts distort exactly the higher-order moments MBI relies on (Section 4.6), such technical noise would bias the inference; the clean, intrinsic-noise-only setting here is deliberately a best case."]),
+    "Unlike the symmetric dependence measures of the previous steps, MBI returns a <i>directed</i> network. In the closed loop it consistently recovers the transcriptional edge p53 &#8594; MDM2: across five independent simulations A&#8594;B = +1.66 &plusmn; 0.75 and is positive in every seed (0.84, 1.08, 2.76, 1.82, 1.78). The reverse mRNA-level edge is absent: B&#8594;A = +0.01 &plusmn; 0.02. This is biologically expected, because the negative arm operates post-translationally on p53 protein and is invisible as an MDM2-mRNA &#8594; TP53-mRNA interaction.",
+    "Under Nutlin-3 MBI still recovers a positive p53 &#8594; MDM2 edge (A&#8594;B = +0.99 &plusmn; 0.60; positive in all five seeds). This is the correct biology: Nutlin blocks the MDM2&ndash;p53 <i>protein</i> interaction, not the transcriptional arm, so p53 continues to drive MDM2 transcription. The reverse estimate is weaker and less stable (B&#8594;A = &minus;0.27 &plusmn; 0.22). With the loop open, p53 is high and near-static and MDM2 mRNA sits on a plateau, so the moment time-courses contain less dynamic information for the fit. MBI is therefore most reliable in the informative, oscillating closed-loop regime; a near-static system gives noisier edge weights.",
+    "The practical robustness result is that the <i>direction</i> p53 &#8594; MDM2 survives changing random seeds, while the exact edge magnitude does not. This is why the report interprets MBI qualitatively as directional support rather than as a calibrated biochemical rate. Reproducibility is handled separately: the numba-parallel Gillespie engine is seeded per cell, so the same seed reproduces the ensemble exactly, and <code>RECOMPUTE=1</code> intentionally forces a fresh simulation.",
+    "Finally, a scope note: MBI works on moment time-courses and implicitly assumes the <i>observed</i> moments equal the <i>true</i> moments. It de-noises only by averaging over many cells and by spline-smoothing higher moments, which suppresses sampling noise&mdash;but it does not model technical scRNA-seq artefacts. Because dropout and library-size shifts distort exactly the higher-order moments MBI relies on (Section 4.6), such technical noise would bias the inference; the clean, intrinsic-noise-only setting here is deliberately a best case."]),
  dict(sid="r10", num="4.9", fig="fig_step9_directional.png", fign=13,
    title="Endowing dependence measures with direction and conditional specificity",
    samples="<b>4000 cells per condition</b> for the directional analysis (fluctuation window t &ge; 200 min). Panels D-E use a separate <b>4000-cell, six-species p53-MDM2-CDKN1A Gillespie simulation</b>. Each independent cell starts from (TP53 mRNA, p53 protein, MDM2 mRNA, MDM2 protein, CDKN1A mRNA, CDKN1A protein) = (15, 30, 20, 50, 15, 40) molecules and is recorded at <b>21 snapshots</b>, every 4 min from 0 to 80 min, with Nutlin efficacy = 1. This simulation contains intrinsic reaction noise but no dropout, library-size variation or other technical scRNA-seq noise. The random seed is 93; the asynchronous-snapshot seed is 101. The complete output is saved in <code>data/cache_step9_three_gene_nutlin.npz</code>; all 20 kinetic parameters are tabulated in Method 3.2. Real-data partial correlation uses LNCaP (n &approx; 152).",
@@ -247,7 +248,7 @@ HTML = f'''<!doctype html>
 <a href="#overview">1. Overview</a> &middot;
 <a href="#biology">2. The p53-MDM2 loop and Nutlin-3</a> &middot;
 <a href="#methods">3. Methods</a> &middot;
-<a href="#results">4. Results (4.1-4.10)</a> &middot;
+<a href="#results">4. Results (4.1-4.9)</a> &middot;
 <a href="#takeaways">5. Discussion and conclusions</a> &middot;
 <a href="#refs">References</a>
 </div>
@@ -409,28 +410,6 @@ footing (Sections 4.6-4.7).</p>
 
 {section_results()}
 
-<h3 id="r-robust">4.10&nbsp; Robustness and reproducibility</h3>
-<p>Because the simulator is stochastic, we separate two notions. <b>Reproducibility</b>: the
-numba-parallel Gillespie engine is seeded <i>per cell</i>, so a given seed reproduces the ensemble
-bit-for-bit (verified: same seed &rarr; identical arrays; a <code>RECOMPUTE</code> flag forces a fresh
-run). <b>Robustness</b>: whether the <i>conclusions</i>&mdash;not the exact numbers&mdash;survive changing
-the seed. Averages over thousands of cells (Sections 4.1-4.4) are inherently stable; the single-realization
-estimates (the permutation z-scores of Section 4.6 and the MBI network of Section 4.8) are the ones that
-need checking. For the permutation test we already average over five noise draws; for MBI we re-ran the
-inference over several seeds:</p>
-<table>
-<tr><th>Condition</th><th>A&rarr;B (p53&rarr;MDM2)</th><th>B&rarr;A (MDM2&rarr;p53)</th></tr>
-<tr><td>CLOSED loop</td><td>+1.36 &plusmn; 0.60&nbsp; (0.8, 1.0, 2.2)&nbsp; <b>always positive</b></td><td>0.00 &plusmn; 0.00&nbsp; <b>always zero</b></td></tr>
-<tr><td>NUTLIN-3</td><td>+1.03 &plusmn; 0.40&nbsp; (1.4, 0.5, 1.2)&nbsp; <b>always positive</b></td><td>&minus;0.26 &plusmn; 0.18&nbsp; (&minus;0.4, 0, &minus;0.3)&nbsp; unstable</td></tr>
-</table>
-<p>(3 seeds, N = 2500 cells; the main Section 4.8 figure uses N = 8000.) The <b>direction</b> p53&rarr;MDM2
-is robust: A&rarr;B is positive in every seed and in both conditions (including Nutlin, where the
-transcriptional arm remains intact), while a stable reverse edge never appears (B&rarr;A is exactly zero in
-the closed loop and only a small, sign-unstable value under Nutlin&mdash;confirming that the reverse edge
-seen in a single Nutlin run is an identifiability artefact, not a real edge). The <i>magnitude</i> of the
-edge, by contrast, varies from seed to seed (A&rarr;B ranges 0.5-2.2). The practical lesson: report the
-inferred <i>direction</i>, which is trustworthy, rather than the precise edge weight, which is not.</p>
-
 <h2 id="takeaways">5. Discussion and conclusions</h2>
 <div class="key">
 <ol>
@@ -446,7 +425,9 @@ The proper remedy is library-size normalization, not the choice of statistic (Se
 TP53 wild-type cells under idasanutlin, with a clean isogenic mutant control (Section 4.7).</li>
 <li>Symmetric measures report association only; the moment-based inference of Raharinirina et al.
 (2021), and time-resolved/conditioned statistics, recover the directed edge p53&#8594;MDM2 and
-distinguish regulation from mere correlation (Sections 4.8-4.9).</li>
+distinguish regulation from mere correlation (Sections 4.8-4.9). Across five independent MBI
+simulations, the p53&#8594;MDM2 direction remains positive in both closed-loop and Nutlin conditions,
+whereas the exact edge weight varies; the robust conclusion is direction, not calibrated magnitude.</li>
 <li>Obtaining direction from single cells ultimately requires dynamics (moments) or RNA velocity,
 because snapshot scRNA-seq has no per-cell time axis.</li>
 </ol>
