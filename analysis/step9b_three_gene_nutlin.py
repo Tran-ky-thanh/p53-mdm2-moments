@@ -17,7 +17,6 @@ sys.path.insert(0, str(ROOT / "src"))
 DATA = ROOT / "data"
 
 import numpy as np
-import fast_ssa_three_gene as F3
 import model_three_gene as M3
 import directional as D
 from cache import load_or_compute
@@ -28,6 +27,15 @@ NUTLIN = 1.0
 SEED = 93
 SNAPSHOT_SEED = 101
 CACHE = DATA / "cache_step9_three_gene_nutlin.npz"
+
+
+def simulation_metadata():
+    """Self-describing metadata stored beside the trajectories."""
+    names = np.array(list(M3.DEFAULT_PARAMS), dtype=str)
+    values = np.array([M3.DEFAULT_PARAMS[name] for name in names], dtype=float)
+    return dict(initial_state=M3.initial_state.astype(np.int64),
+                parameter_names=names, parameter_values=values,
+                model_version=np.array([2], dtype=np.int64))
 
 
 def asynchronous_snapshot(trajectories, times):
@@ -62,6 +70,9 @@ def asynchronous_snapshot(trajectories, times):
 
 
 def compute():
+    # Import the numba engine only when trajectories actually need recomputing;
+    # cached plotting and metadata upgrades therefore need only NumPy.
+    import fast_ssa_three_gene as F3
     trajectories = F3.simulate_ensemble(N_CELLS, TIMES, nutlin=NUTLIN, seed=SEED)
     md = trajectories[:, M3.IDX['Mdm2_mRNA'], :]
     cd = trajectories[:, M3.IDX['CDKN1A_mRNA'], :]
@@ -81,17 +92,25 @@ def compute():
                n_cells=np.array([N_CELLS]), seed=np.array([SEED]),
                snapshot_seed=np.array([SNAPSHOT_SEED]))
     out.update(asynchronous_snapshot(trajectories, TIMES))
+    out.update(simulation_metadata())
     return out
 
 
 def main():
     out = load_or_compute(CACHE, compute)
+    upgraded = False
     if 'snapshot_stats' not in out:
         # Upgrade an existing cache without rerunning the expensive SSA simulation.
         out.update(asynchronous_snapshot(out['trajectories'], out['times']))
         out['snapshot_seed'] = np.array([SNAPSHOT_SEED])
+        upgraded = True
+    for key, value in simulation_metadata().items():
+        if key not in out:
+            out[key] = value
+            upgraded = True
+    if upgraded:
         np.savez_compressed(CACHE, **out)
-        print(f"[cache] added asynchronous snapshot to {CACHE.name}")
+        print(f"[cache] added analysis metadata to {CACHE.name}; trajectories were not recomputed")
     print(f"Saved simulation: {CACHE}")
     print("species:", list(out['species']))
     for i, t in enumerate(out['times']):

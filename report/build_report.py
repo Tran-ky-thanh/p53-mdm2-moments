@@ -52,6 +52,7 @@ header p{margin:0;opacity:.92}
 main{padding:0 48px}
 h2{margin-top:46px;padding-top:14px;border-top:2px solid var(--line);font-size:23px;color:#0f172a}
 h3{margin-top:34px;font-size:19px;color:#1e3a8a;line-height:1.35}
+h4{margin-top:25px;font-size:17px;color:#334155;line-height:1.4}
 p,li{color:var(--fg)}
 .lead{font-size:17px;color:#374151}
 .toc{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 22px;margin:24px 0;font-size:14.5px}
@@ -176,7 +177,7 @@ RESULTS = [
     "Finally, a scope note: MBI works on the moment time-courses and implicitly assumes the <i>observed</i> moments equal the <i>true</i> moments. It de-noises only by averaging over many cells (and by spline-smoothing the higher moments), which suppresses sampling noise&mdash;but it does not model technical scRNA-seq artefacts. Because dropout and library-size shifts distort exactly the higher-order moments MBI relies on (Section 4.6), such technical noise would bias the inference; the clean, intrinsic-noise-only setting here is deliberately a best case."]),
  dict(sid="r10", num="4.9", fig="fig_step9_directional.png", fign=13,
    title="Endowing dependence measures with direction and conditional specificity",
-   samples="<b>4000 cells per condition</b> for the directional analysis (fluctuation window t &ge; 200 min). Panel D uses a separate <b>4000-cell, six-species p53-MDM2-CDKN1A Gillespie simulation</b> at 4-min snapshots from 0-80 min with Nutlin efficacy = 1; its complete output is saved in <code>data/cache_step9_three_gene_nutlin.npz</code>. Real-data partial correlation uses LNCaP (n &approx; 152).",
+   samples="<b>4000 cells per condition</b> for the directional analysis (fluctuation window t &ge; 200 min). Panels D-E use a separate <b>4000-cell, six-species p53-MDM2-CDKN1A Gillespie simulation</b>. Each independent cell starts from (TP53 mRNA, p53 protein, MDM2 mRNA, MDM2 protein, CDKN1A mRNA, CDKN1A protein) = (15, 30, 20, 50, 15, 40) molecules and is recorded at <b>21 snapshots</b>, every 4 min from 0 to 80 min, with Nutlin efficacy = 1. This simulation contains intrinsic reaction noise but no dropout, library-size variation or other technical scRNA-seq noise. The random seed is 93; the asynchronous-snapshot seed is 101. The complete output is saved in <code>data/cache_step9_three_gene_nutlin.npz</code>; all 20 kinetic parameters are tabulated in Method 3.2. Real-data partial correlation uses LNCaP (n &approx; 152).",
    caption="(A) lagged cross-correlation and (B) lagged distance correlation of the detrended p53/MDM2 mRNA "
            "fluctuations, shown for tau &ge; 0 as two directional curves; at positive lag the p53&rarr;MDM2 curve "
            "dominates and peaks near tau &asymp; +4 min while MDM2&rarr;p53 decays, i.e. p53 fluctuations precede "
@@ -186,7 +187,8 @@ RESULTS = [
            "(F) partial correlation of MDM2-CDKN1A given a p53-activity proxy on real data.",
    interp=[
     "Two ingredients convert the symmetric measures of Sections 4.5-4.6 into causal ones. <b>Direction requires time</b>: using per-cell trajectories, the lagged cross-correlation and lagged distance correlation peak at positive lag for p53&#8594;MDM2 (A leads B), and Granger causality and transfer entropy are strongly asymmetric (Granger A&#8594;B = 0.21 vs B&#8594;A = 0.00; transfer entropy 0.09 vs 0.001 nats), recovering the direction p53&#8594;MDM2. (Because these measures are symmetric, C<sub>B&#8594;A</sub>(&tau;)=C<sub>A&#8594;B</sub>(&minus;&tau;), it is enough to show <i>positive</i> lags only: over &tau; &ge; 0 the two directional curves are genuinely distinct, and the p53&#8594;MDM2 curve exceeding MDM2&#8594;p53 there means p53 fluctuations <i>precede</i> MDM2&mdash;the temporal-precedence signature of p53&#8594;MDM2. The ~4-min peak reflects the transcription/translation delay.) A further advantage of the <i>signed</i> cross-correlation (panel A) is the <b>negative lobe near &tau; &asymp; 16 min</b>: after p53 drives MDM2 up, the negative-feedback arm pulls the system back, giving an anti-correlation (overshoot) at roughly half the loop's oscillation timescale. This lobe is <i>consistent with</i> the closed negative-feedback loop&mdash;it is absent under Nutlin (open loop; grey dashed curve) and, being a change of <i>sign</i>, cannot appear in the non-negative distance correlation of panel B.",
-    "<b>Panels D and E use an explicit p53-MDM2-CDKN1A simulation.</b> It contains mRNA and protein for all three genes. Here <i>open loop</i> means that Nutlin removes only the reverse inhibitory arm, MDM2 protein &#8866; p53; it does not inhibit p53 as a transcription factor. The forward branches p53 &#8594; MDM2 mRNA and p53 &#8594; CDKN1A mRNA therefore remain, giving the fork MDM2 mRNA &#8592; p53 protein &#8594; CDKN1A mRNA. Panel D shows this biology directly: TP53 mRNA remains close to baseline because its transcription is constitutive in the model, whereas p53 protein rises continuously to more than 6 log2-fold above baseline after MDM2-mediated degradation is blocked. MDM2 and CDKN1A mRNAs also increase and then plateau because both forward transcriptional branches remain active. This separation between a nearly unchanged TP53 transcript and strongly accumulating p53 protein illustrates why TP53 mRNA is a poor proxy for p53 activity in scRNA-seq. The rising MDM2 transcript cannot restore feedback because Nutlin prevents its protein product from degrading p53. CDKN1A is a canonical p53 target associated with cell-cycle arrest; this minimal model simulates its expression but does not simulate the cell cycle itself. Panel E constructs one asynchronous synthetic snapshot by taking each of the 4000 cells once at a randomly sampled response phase between 4 and 80 min. The resulting p53 heterogeneity makes MDM2 and CDKN1A strongly correlated (r = 0.602). Conditioning on the simulated p53-protein input integrated over the preceding response&mdash;the actual shared driver of both target mRNAs&mdash;reduces the partial correlation to -0.001. Thus the tall marginal bar reflects the common p53 fork, rather than a direct MDM2-CDKN1A edge. On the real data (panel F), conditioning MDM2-CDKN1A on an mRNA p53-activity proxy lowers their correlation only slightly (0.43 to 0.38), so it does not establish a direct edge; the proxy does not measure protein-level p53 activity without error (Kuroki &amp; Pearl, 2014). Partial correlation is nonetheless a standard tool for pruning indirect edges in gene networks (de la Fuente et al., 2004; Sch&auml;fer &amp; Strimmer, 2005).",
+    "<b>Panels D and E use an explicit p53-MDM2-CDKN1A simulation.</b> It contains mRNA and protein for all three genes and 13 reaction channels, simulated exactly with the Gillespie direct method. All 4000 cells use the same initial molecular counts and kinetic constants but have independent reaction-event histories, so their variation is intrinsic stochastic variation. Here <i>open loop</i> means that Nutlin removes only the reverse inhibitory arm, MDM2 protein &#8866; p53; it does not inhibit p53 as a transcription factor. At efficacy 1, the effective MDM2-dependent p53 degradation constant is exactly zero, while the forward branches p53 &#8594; MDM2 mRNA and p53 &#8594; CDKN1A mRNA remain. This gives the common-driver fork MDM2 mRNA &#8592; p53 protein &#8594; CDKN1A mRNA. Panel D plots log<sub>2</sub>[(mean count at t + 1)/(mean count at t = 0 + 1)]. TP53 mRNA remains close to baseline because its transcription is constitutive in the model, whereas p53 protein rises continuously to more than 6 log2-fold above baseline after MDM2-mediated degradation is blocked. MDM2 and CDKN1A mRNAs also increase and then plateau because both forward transcriptional branches remain active. This separation between a nearly unchanged TP53 transcript and strongly accumulating p53 protein illustrates why TP53 mRNA is a poor proxy for p53 activity in scRNA-seq. The rising MDM2 transcript cannot restore feedback because Nutlin prevents its protein product from degrading p53. CDKN1A is a canonical p53 target associated with cell-cycle arrest; this minimal model simulates its expression but does not simulate the cell cycle itself.",
+    "Panel E converts the trajectories into a synthetic asynchronous scRNA-seq-like snapshot without adding technical noise: each of the 4000 cells contributes exactly one observation, sampled uniformly from the 20 post-treatment times (4-80 min). The resulting response-phase heterogeneity makes MDM2 and CDKN1A strongly correlated (r = 0.602). The conditioning covariates are two target-specific, exponentially weighted histories of p53-protein Hill activity, using each target's Hill constant, Hill coefficient and mRNA-decay rate. They represent the shared p53 input accumulated before the sampled time. Regressing both target mRNAs on these covariates and correlating the residuals reduces the partial correlation to -0.001. Thus the tall marginal bar reflects the common p53 fork, rather than a direct MDM2-CDKN1A edge. On the real data (panel F), conditioning MDM2-CDKN1A on an mRNA p53-activity proxy lowers their correlation only slightly (0.43 to 0.38), so it does not establish a direct edge; the proxy does not measure protein-level p53 activity without error (Kuroki &amp; Pearl, 2014). Partial correlation is nonetheless a standard tool for pruning indirect edges in gene networks (de la Fuente et al., 2004; Sch&auml;fer &amp; Strimmer, 2005).",
     "A fundamental limitation applies: these directional estimators require per-cell time series, whereas scRNA-seq destroys each cell at measurement and yields only population snapshots. Direction on real data must therefore come from population moment dynamics (MBI, Section 4.8) or from RNA velocity, rather than from lagged single-cell statistics."]),
 ]
 
@@ -301,6 +303,47 @@ transcription is activated by p53 (Hill function); p53 degradation by MDM2 is sa
 (Michaelis-Menten). Nutlin efficacy scales the degradation rate by (1 - nutlin).</p>
 <div class="formula">MDM2 transcription (arm 1):  k<sub>txn</sub> P^n / (K<sub>d</sub>^n + P^n)        (P = p53)
 p53 degradation (arm 2):     (1 - nutlin) k<sub>deg</sub> D P / (K<sub>m</sub> + P)   (D = MDM2)</div>
+
+<h4>Three-gene p53-MDM2-CDKN1A extension used in Figure 13D-E</h4>
+<p>To test whether conditioning can separate a common-driver correlation from a direct regulatory
+edge, we extend the four-species loop to six species: TP53 mRNA (m<sub>P</sub>), p53 protein (P),
+MDM2 mRNA (m<sub>M</sub>), MDM2 protein (M), CDKN1A mRNA (m<sub>C</sub>) and CDKN1A protein (C).
+The model has 13 reaction channels: transcription, mRNA degradation, translation and protein
+degradation for each gene, plus MDM2-dependent p53 degradation. MDM2 and CDKN1A transcription
+are separate Hill functions of the same p53-protein driver:</p>
+<div class="formula">a<sub>MDM2 txn</sub>(P) = k<sub>M</sub> P^nM / (K<sub>M</sub>^nM + P^nM) + k<sub>M0</sub>
+a<sub>CDKN1A txn</sub>(P) = k<sub>C</sub> P^nC / (K<sub>C</sub>^nC + P^nC) + k<sub>C0</sub>
+a<sub>MDM2-dep p53 deg</sub>(P,M) = (1 - u) k<sub>MP</sub> M P / (K<sub>m</sub> + P)</div>
+<p>Here u is Nutlin efficacy. Figure 13D-E uses u = 1, so the last propensity is zero: the
+MDM2-protein &#8866; p53 arm is fully removed, while both p53-driven transcriptional arms remain.</p>
+<table>
+<tr><th>Process</th><th>Parameters used (per min; molecule-count constants where applicable)</th></tr>
+<tr><td>TP53</td><td>transcription 3.0; mRNA decay 0.20; translation 4.0; basal p53-protein decay 0.02</td></tr>
+<tr><td>MDM2 &#8866; p53</td><td>maximum MDM2-dependent p53 degradation 2.0; Michaelis constant K<sub>m</sub> = 120</td></tr>
+<tr><td>p53 &#8594; MDM2</td><td>maximum transcription 6.0; K<sub>M</sub> = 80; Hill coefficient n<sub>M</sub> = 4; basal transcription 0.05</td></tr>
+<tr><td>MDM2 turnover</td><td>mRNA decay 0.10; translation 1.2; protein decay 0.30</td></tr>
+<tr><td>p53 &#8594; CDKN1A</td><td>maximum transcription 5.0; K<sub>C</sub> = 70; Hill coefficient n<sub>C</sub> = 3; basal transcription 0.05</td></tr>
+<tr><td>CDKN1A turnover</td><td>mRNA decay 0.08; translation 1.0; protein decay 0.15</td></tr>
+</table>
+<p>We simulate <b>4000 independent cells</b> with the Gillespie direct algorithm, using initial state
+(m<sub>P</sub>, P, m<sub>M</sub>, M, m<sub>C</sub>, C) = (15, 30, 20, 50, 15, 40) molecules,
+random seed 93, and 21 retained observation times from 0 to 80 min in 4-min increments. These are
+exact stochastic reaction counts with intrinsic molecular noise; no dropout, library-size factor,
+negative-binomial sampling or other technical scRNA-seq noise is added. The full 4000 x 6 x 21
+array is cached in <code>data/cache_step9_three_gene_nutlin.npz</code>, allowing Figures 13D-E to be
+redrawn without rerunning the simulation. The model, accelerated simulator and cache-generation
+code are saved in <code>src/model_three_gene.py</code>, <code>src/fast_ssa_three_gene.py</code> and
+<code>analysis/step9b_three_gene_nutlin.py</code>, respectively. The cache also stores the species
+order, initial state, parameter names and values, Nutlin efficacy, seeds and number of cells.</p>
+<p>For Figure 13E, one time is sampled uniformly from the 20 post-Nutlin observations (4-80 min)
+for each cell (snapshot seed 101). The two conditioning variables summarize the p53-protein input
+seen by each target before measurement:</p>
+<div class="formula">Z<sub>g</sub>(t) = sum_{{s&le;t}} H<sub>g</sub>(P(s)) exp[-gamma<sub>g</sub>(t-s)] Delta t,
+H<sub>g</sub>(P) = P^ng / (K<sub>g</sub>^ng + P^ng),     g in {{MDM2, CDKN1A}}</div>
+<p>The exponential weights account for loss of earlier transcriptional input through target-mRNA
+decay. Partial correlation is then the Pearson correlation between the residuals after separately
+regressing MDM2 mRNA and CDKN1A mRNA on the two-column matrix Z. This conditions on the actual
+protein-level common driver available in the synthetic model.</p>
 
 <h3>3.3 Moments</h3>
 <div class="formula">raw moment:  E[A^l1 B^l2](t) = (1/N) sum_n a_n^l1 b_n^l2      (A = p53 mRNA, B = MDM2 mRNA)
