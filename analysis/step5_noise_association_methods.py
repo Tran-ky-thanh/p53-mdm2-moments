@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-STEP 5 - Simple dropout noise + Pearson/MI/HSIC between p53 mRNA and MDM2 mRNA.
+STEP 5 - Simple dropout noise + Pearson/Spearman/MI/HSIC/dCor between p53 and MDM2 mRNA.
 Results cached to data/cache_step5.npz; re-plotting only reloads.
 
 Run:            python analysis/step5_noise_association_methods.py
@@ -27,18 +27,27 @@ DT = 15.0
 T_SNAP = 600.0
 BETAS = [1.0, 0.6, 0.3, 0.15, 0.08]
 N_REP = 6
+N_KERNEL = 1200
 CONDS = [(0.0, "CLOSED loop", 'C0'), (1.0, "NUTLIN-3", 'C3')]
-METHODS = ['pearson', 'MI', 'HSIC']
-METHOD_LABEL = {'pearson': 'Pearson correlation', 'MI': 'Mutual Information (nats)', 'HSIC': 'normalized HSIC'}
+METHODS = ['pearson', 'spearman', 'MI', 'HSIC', 'dCor']
+METHOD_LABEL = {'pearson': 'Pearson correlation', 'spearman': 'Spearman correlation',
+                'MI': 'Mutual information (nats)', 'HSIC': 'normalized HSIC',
+                'dCor': 'distance correlation'}
 
 
 def compute():
     T = np.arange(0.0, HORIZON, DT)
     isnap = int(np.argmin(np.abs(T - T_SNAP)))
-    out = {'betas': np.array(BETAS)}
+    out = {'betas': np.array(BETAS), 'n_cells': np.array([N_CELLS]),
+           't_snap': np.array([T_SNAP]), 'n_rep': np.array([N_REP]),
+           'n_kernel': np.array([N_KERNEL])}
     for nut, label, _ in CONDS:
         d = F.simulate_ensemble(N_CELLS, T, nutlin=nut, seed=5050 + int(nut * 10))
         Xc = d[:, M.IDX['p53_mRNA'], isnap]; Yc = d[:, M.IDX['Mdm2_mRNA'], isnap]
+        # Retain the clean snapshot so future metric/plot additions do not need
+        # to rerun the Gillespie trajectories.
+        out[f'{label}__clean_p53_mRNA'] = Xc
+        out[f'{label}__clean_mdm2_mRNA'] = Yc
         for m in METHODS:
             out[f'{label}__{m}__mean'] = np.zeros(len(BETAS)); out[f'{label}__{m}__std'] = np.zeros(len(BETAS))
         for bi, beta in enumerate(BETAS):
@@ -46,7 +55,7 @@ def compute():
             for r in range(N_REP):
                 rng = np.random.default_rng(1000 * bi + r)
                 meas = A.all_measures(A.add_dropout(Xc, beta, rng), A.add_dropout(Yc, beta, rng),
-                                      n_kernel=1200, seed=r)
+                                      n_kernel=N_KERNEL, seed=r)
                 for m in METHODS:
                     vals[m].append(meas[m])
             for m in METHODS:
@@ -57,26 +66,41 @@ def compute():
 
 def plot(D):
     plotstyle.apply()
-    fig, axs = plt.subplots(1, 3, figsize=(16, 4.6))
+    fig, axs = plt.subplots(3, 2, figsize=(13, 14.5))
+    axes = axs.ravel()
     xpos = np.arange(len(BETAS))
-    for ax, m in zip(axs, METHODS):
+    for ax, m in zip(axes, METHODS):
         for nut, label, col in CONDS:
             ax.errorbar(xpos, D[f'{label}__{m}__mean'], yerr=D[f'{label}__{m}__std'],
-                        marker='o', color=col, capsize=3, label=label)
+                        marker='o', lw=2.3, ms=6, color=col, capsize=3, label=label)
         ax.axhline(0, color='gray', lw=0.6)
         ax.set_xticks(xpos); ax.set_xticklabels([f"{b:.2f}" for b in BETAS])
-        ax.set_xlabel("capture efficiency beta  (lower = more dropout ->)")
-        ax.set_title(METHOD_LABEL[m], fontsize=11); ax.legend(fontsize=9); ax.grid(alpha=.3)
-    fig.suptitle(f"Step 5 - Detecting p53<->MDM2 mRNA dependence under dropout noise: Cor vs MI vs HSIC  "
+        ax.set_xlabel("capture efficiency beta  (lower = more dropout)")
+        ax.set_title(METHOD_LABEL[m], fontsize=13); ax.legend(fontsize=10); ax.grid(alpha=.3)
+    axes[-1].axis('off')
+    axes[-1].text(0.05, 0.72, "Five complementary dependence measures", fontsize=14,
+                  fontweight='bold', transform=axes[-1].transAxes)
+    axes[-1].text(0.05, 0.60,
+                  "Pearson: linear\nSpearman: monotone\nMI / HSIC / dCor: nonlinear\n\n"
+                  "Curves show mean +/- SD across\nsix independent dropout draws.",
+                  fontsize=12, va='top', transform=axes[-1].transAxes)
+    fig.suptitle(f"Step 5 - Detecting p53<->MDM2 mRNA dependence under simple dropout noise  "
                  f"[N={N_CELLS} cells, snapshot t={T_SNAP:.0f} min, {N_REP} noise draws/point]\n"
                  "(closed loop = dependent; Nutlin = open loop, dependence ~0)", fontsize=11)
-    fig.tight_layout(rect=[0, 0, 1, 0.93])
+    fig.tight_layout(rect=[0, 0, 1, 0.95])
     fig.savefig(str(FIG / "fig_step5_noise_association.png"), dpi=120)
     print("Saved fig_step5_noise_association.png")
 
 
 def main():
-    D = load_or_compute(DATA / "cache_step5.npz", compute)
+    cache_path = DATA / "cache_step5.npz"
+    D = load_or_compute(cache_path, compute)
+    metadata = {'n_cells': np.array([N_CELLS]), 't_snap': np.array([T_SNAP]),
+                'n_rep': np.array([N_REP]), 'n_kernel': np.array([N_KERNEL])}
+    if any(key not in D for key in metadata):
+        D.update(metadata)
+        np.savez_compressed(cache_path, **D)
+        print(f"[cache] added self-describing metadata to {cache_path.name}")
     plot(D)
 
 

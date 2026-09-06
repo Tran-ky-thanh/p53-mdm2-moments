@@ -40,14 +40,14 @@ binds the p53-pocket of MDM2, blocks MDM2→p53 degradation, so p53 **accumulate
 3. **step3** – higher-order moments (mean/covariance/skewness) of the (p53, MDM2) mRNA pair.
 4. **step4** – Figure-3-style plots with a zero-expression initial state, matching the
    Patterns2021 visualization (snapshot scatter + smoothed display of raw cached moment time courses).
-5. **step5** – add simple dropout noise, compare Pearson / MI / HSIC.
+5. **step5** – add simple dropout noise and compare Pearson / Spearman / MI / HSIC / dCor.
 6. **step6** – **published Splatter noise** + Pearson/Spearman/MI/HSIC/**dCor** + permutation tests.
 7. **step7 (a–e)** – **real scRNA-seq** (MIX-seq): load & QC (7a); DMSO vs Idasanutlin with negative
    controls + a WT/mutant 2×2 control (7b); 6 h vs 24 h timepoints (7c); the direct (TP53, MDM2) pair
    shown honestly to be weak on mRNA (7d); and the response across 22 cell lines, with marker area
    proportional to each line's QC-passing cell count (7e).
 8. **step8** – the non-linear **MBI** of Raharinirina et al. (2021) recovers the directed edge p53→MDM2 from mRNA moments.
-9. **step9** – make Cor/MI/HSIC/dCor **directional** (lag, Granger, transfer entropy) and separate
+9. **step9** – add **direction** to Cor/dCor using lag and Granger causality, and separate
    **regulation vs correlation** (partial correlation / conditioning). **step9b** saves a full
    six-species p53-MDM2-CDKN1A simulation under Nutlin for Figure 13D and later reuse.
 
@@ -91,7 +91,7 @@ subfolders `DMSO_6hr_expt1/` and `Idasanutlin_6hr_expt1/` (10x `matrix.mtx` + `g
   is weak because TP53 mRNA is a poor proxy for p53 activity.)
 - **Non-linear MBI recovers the directed edge p53→MDM2** from mRNA moments alone; this direction is
   **robust across random seeds**, though the exact edge weight is not (report direction, not magnitude).
-- Symmetric measures become **directional** with time (lag/Granger/transfer entropy) and separate
+- Association measures gain **direction** with time (lag/Granger) and separate
   **regulation from correlation** with **conditioning** (partial correlation) — but these need
   per-cell time series, which real snapshots lack (hence moment dynamics / RNA velocity).
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 STEP 9 - Make Cor/MI/HSIC/dCor DIRECTIONAL (time) and separate regulation from correlation
-(conditioning). Lagged Cor/dCor, Granger, Transfer Entropy; partial correlation.
+(conditioning). Lagged Cor/dCor, Granger causality and partial correlation.
 Results cached to data/cache_step9.npz; re-plotting only reloads.
 
 Run:            python analysis/step9_directional_conditional.py
@@ -40,8 +40,7 @@ def direction(nutlin, seed):
             np.array([D.lagged_xcorr(B, A, L) for L in LAGS]),
             np.array([D.lagged_dcor(A, B, L) for L in LAGS]),
             np.array([D.lagged_dcor(B, A, L) for L in LAGS]),
-            np.array(D.granger_1step(A, B)), np.array(D.granger_1step(B, A)),
-            np.array(D.transfer_entropy(A, B)), np.array(D.transfer_entropy(B, A)))
+            np.array(D.granger_1step(A, B)), np.array(D.granger_1step(B, A)))
 
 
 def common_driver(n=4000, seed=0):
@@ -66,11 +65,11 @@ def realdata():
 def compute():
     out = {'lags_min': np.array(LAGS) * DT}
     for label, nut, seed in [("closed", 0.0, 91), ("nutlin", 1.0, 92)]:
-        xc_ab, xc_ba, dc_ab, dc_ba, gab, gba, teab, teba = direction(nut, seed)
+        xc_ab, xc_ba, dc_ab, dc_ba, gab, gba = direction(nut, seed)
         out.update({f'{label}__xc_ab': xc_ab, f'{label}__xc_ba': xc_ba,
                     f'{label}__dc_ab': dc_ab, f'{label}__dc_ba': dc_ba,
-                    f'{label}__gab': gab, f'{label}__gba': gba, f'{label}__teab': teab, f'{label}__teba': teba})
-        print(f"[{label}] Granger A->B={float(gab):.3f} B->A={float(gba):.3f} | TE A->B={float(teab):.4f} B->A={float(teba):.4f}")
+                    f'{label}__gab': gab, f'{label}__gba': gba})
+        print(f"[{label}] Granger A->B={float(gab):.3f} B->A={float(gba):.3f}")
     ms, ps = common_driver(); rm, rp = realdata()
     out['cd'] = np.array([ms, ps]); out['real'] = np.array([rm, rp])
     print(f"[common-driver] corr={ms:+.3f} partial={ps:+.3f} | [real] corr={rm:+.3f} partial={rp:+.3f}")
@@ -117,14 +116,21 @@ def plot(D_):
     _direction_panel(axs[0, 1], D_['closed__dc_ab'], D_['closed__dc_ba'], 'lagged distance correlation',
                      "(B) Lagged distance correlation (closed loop, nonlinear)\ndCor>=0 by design: cannot show the negative lobe")
     ax = axs[1, 0]
-    x = np.arange(2); w = 0.2
-    ax.bar(x-1.5*w, [float(D_['closed__gab']), float(D_['nutlin__gab'])], w, color='C2', label='Granger A->B')
-    ax.bar(x-0.5*w, [float(D_['closed__gba']), float(D_['nutlin__gba'])], w, color='C4', label='Granger B->A')
-    ax.bar(x+0.5*w, [float(D_['closed__teab'])*10, float(D_['nutlin__teab'])*10], w, color='C2', alpha=0.5, label='TE A->B x10')
-    ax.bar(x+1.5*w, [float(D_['closed__teba'])*10, float(D_['nutlin__teba'])*10], w, color='C4', alpha=0.5, label='TE B->A x10')
+    x = np.arange(2); w = 0.32
+    forward = [float(D_['closed__gab']), float(D_['nutlin__gab'])]
+    reverse = [float(D_['closed__gba']), float(D_['nutlin__gba'])]
+    bars_f = ax.bar(x-w/2, forward, w, color='C2', label='Granger p53->MDM2')
+    bars_r = ax.bar(x+w/2, reverse, w, color='C4', label='Granger MDM2->p53')
     ax.set_xticks(x); ax.set_xticklabels(['CLOSED', 'NUTLIN'])
-    ax.set_ylabel('directional strength'); ax.legend(fontsize=10)
-    ax.set_title("(C) Granger & transfer entropy:\nA->B >> B->A  (direction p53->MDM2)")
+    ax.set_ylabel('Granger strength  log(var reduced / var full)')
+    ax.set_ylim(0, max(forward + reverse) * 1.25)
+    ax.legend(fontsize=10)
+    ax.set_title("(C) One-step Granger causality:\np53->MDM2 is recovered in the dynamic closed loop")
+    for bars in (bars_f, bars_r):
+        for bar in bars:
+            value = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width()/2, value + 0.006,
+                    f'{value:.3f}', ha='center', va='bottom', fontsize=9)
     ax.grid(alpha=.3, axis='y')
     rm, rp = D_['real']
     ax = axs[1, 1]
@@ -175,7 +181,8 @@ def plot(D_):
 
 
 def main():
-    D_ = load_or_compute(DATA / "cache_step9.npz", compute)
+    cache_path = DATA / "cache_step9.npz"
+    D_ = load_or_compute(cache_path, compute)
     if not THREE_GENE_CACHE.exists():
         print("Missing three-gene cache - run analysis/step9b_three_gene_nutlin.py first.")
         return

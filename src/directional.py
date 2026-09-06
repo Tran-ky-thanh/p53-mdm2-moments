@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Utilities that turn SYMMETRIC measures (Cor/MI/HSIC/dCor) into DIRECTIONAL ones and separate
+Utilities that add temporal direction to association measures and separate
 REGULATION from CORRELATION. Two principles:
 
   (1) DIRECTION requires TIME (temporal precedence):
       - lagged cross-correlation / lagged dCor: measured between X(t) and Y(t+tau).
       - Granger causality (1-step): does X(t) improve prediction of Y(t+1) beyond Y(t)?
-      - Transfer entropy TE(X->Y) = I(Y_{t+1}; X_t | Y_t) -- the DIRECTIONAL version of MI.
       Asymmetry between directions => who drives whom.
 
   (2) REGULATION vs CORRELATION requires CONDITIONING:
@@ -63,39 +62,6 @@ def granger_1step(src, tgt):
     r0 = Xt1 - base.dot(lstsq(base, Xt1, rcond=None)[0])
     r1 = Xt1 - full.dot(lstsq(full, Xt1, rcond=None)[0])
     return float(np.log(max(r0.var(), 1e-12) / max(r1.var(), 1e-12)))
-
-
-def transfer_entropy(src, tgt, bins=6):
-    """
-    Transfer entropy TE(src->tgt) = I(tgt_{t+1}; src_t | tgt_t) [nats] (histogram estimator).
-    = sum p(y1,y0,x0) log[ p(y1|y0,x0) / p(y1|y0) ].
-    """
-    y1 = tgt[:, 1:].ravel(); y0 = tgt[:, :-1].ravel(); x0 = src[:, :-1].ravel()
-    def binidx(v):
-        edges = np.quantile(v, np.linspace(0, 1, bins + 1))
-        edges[-1] += 1e-9
-        return np.clip(np.digitize(v, edges[1:-1]), 0, bins - 1)
-    a = binidx(y1); b = binidx(y0); c = binidx(x0)
-    # count joint p(y1,y0,x0)
-    P = np.zeros((bins, bins, bins))
-    for i in range(len(a)):
-        P[a[i], b[i], c[i]] += 1
-    P /= P.sum()
-    te = 0.0
-    Pb = P.sum(axis=0)                 # p(y0,x0)
-    Pyb = P.sum(axis=2)               # p(y1,y0)
-    Pbb = P.sum(axis=(0, 2))          # p(y0)
-    for i in range(bins):
-        for j in range(bins):
-            for k in range(bins):
-                p = P[i, j, k]
-                if p <= 0:
-                    continue
-                p_y1_given_y0x0 = p / Pb[j, k]
-                p_y1_given_y0 = Pyb[i, j] / Pbb[j] if Pbb[j] > 0 else 0
-                if p_y1_given_y0 > 0:
-                    te += p * np.log(p_y1_given_y0x0 / p_y1_given_y0)
-    return float(te)
 
 
 def partial_corr(a, b, z):
