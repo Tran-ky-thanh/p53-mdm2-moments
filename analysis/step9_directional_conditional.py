@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 import fast_ssa as F
 import model as M
 import directional as D
+import association as A
 import plotstyle
 from cache import load_or_compute
 
@@ -28,6 +29,18 @@ DT = 2.0
 LATE = 200.0
 LAGS = [-12, -8, -6, -4, -3, -2, -1, 0, 1, 2, 3, 4, 6, 8, 12]
 THREE_GENE_CACHE = DATA / "cache_step9_three_gene_nutlin.npz"
+
+# Splatter parameters for the synthetic snapshot, matching step9b.
+NORM_LIB_SCALE = 0.35
+NORM_BCV = 0.40
+NORM_DROPOUT_MID = 1.0
+NORM_DROPOUT_SHAPE = -1.0
+NORM_SPLATTER_SEED = 202
+NORM_BG_GENES = 300
+NORM_BG_SEED = 7
+NORM_PROXY = ["FDXR", "GDF15", "SESN1", "DDB2", "TP53I3", "BTG2"]
+NORM_LEVELS = ["raw", "log1p", "cp10k"]
+NORM_LABEL = {"raw": "raw counts", "log1p": "log1p only", "cp10k": "CP10k + log1p"}
 
 
 def direction(nutlin, seed):
@@ -60,6 +73,120 @@ def realdata():
     col = lambda g: norm[mask, gi[g]]
     Z = np.mean([col(g) for g in ["FDXR", "GDF15", "SESN1", "DDB2", "TP53I3", "BTG2"]], axis=0)
     return np.corrcoef(col("MDM2"), col("CDKN1A"))[0, 1], D.partial_corr(col("MDM2"), col("CDKN1A"), Z)
+
+
+def _norm_pair(mdm2, cdkn1a, tot, level):
+    """Return (marginal, x, y) for a normalization level on a two-gene pair."""
+    g = np.column_stack([mdm2, cdkn1a]).astype(float)
+    if level == "raw":
+        z = g
+    elif level == "log1p":
+        z = np.log1p(g)
+    else:  # cp10k + log1p
+        z = np.log1p(g * (1e4 / np.maximum(tot, 1.0))[:, None])
+    return np.corrcoef(z[:, 0], z[:, 1])[0, 1], z[:, 0], z[:, 1]
+
+
+def normalization_effect():
+    """
+    Does library-size normalization let conditioning on p53 recover the truth?
+
+    Synthetic: the Splatter-noised MDM2/CDKN1A snapshot (with 300 background genes
+    supplying a realistic library size) evaluated raw / log1p / CP10k+log1p; the
+    conditioning variable is the biological p53-protein exposure, unchanged across
+    levels. Real: the LNCaP idasanutlin cells, same three levels, conditioning on
+    an mRNA p53-target proxy normalized the same way as the targets.
+    """
+    out = {"levels": np.array(NORM_LEVELS)}
+    # ---- synthetic ----
+    if THREE_GENE_CACHE.exists():
+        with np.load(str(THREE_GENE_CACHE), allow_pickle=True) as s3:
+            md = s3["snapshot_mdm2_mRNA"].astype(float)
+            cd = s3["snapshot_cdkn1a_mRNA"].astype(float)
+            exposure = s3["snapshot_p53_exposure"]
+            out["syn_clean"] = np.asarray(s3["snapshot_stats"], float)
+        n = len(md)
+        bg_rng = np.random.default_rng(NORM_BG_SEED)
+        mu = bg_rng.lognormal(mean=np.log(5.0), sigma=1.0, size=(1, NORM_BG_GENES))
+        bg = bg_rng.poisson(np.repeat(mu, n, axis=0)).astype(float)
+        full = np.column_stack([md, cd, bg])
+        noisy = A.splatter_noise(full, np.random.default_rng(NORM_SPLATTER_SEED),
+                                 lib_scale=NORM_LIB_SCALE, bcv=NORM_BCV,
+                                 dropout_mid=NORM_DROPOUT_MID, dropout_shape=NORM_DROPOUT_SHAPE)
+        tot = noisy.sum(axis=1)
+        syn = np.zeros((len(NORM_LEVELS), 2))
+        for i, lv in enumerate(NORM_LEVELS):
+            marg, x, y = _norm_pair(noisy[:, 0], noisy[:, 1], tot, lv)
+            syn[i] = [marg, D.partial_corr(x, y, exposure)]
+        out["syn"] = syn
+        out["syn_n"] = np.array([n])
+    # ---- real ----
+    try:
+        d = np.load(str(DATA / "data_step7_panel.npz"), allow_pickle=True)
+        c = "Idasanutlin"; genes = list(d[f"{c}__genes"]); gi = {g: i for i, g in enumerate(genes)}
+        X = d[f"{c}__X"].astype(float); tot = d[f"{c}__tot"].astype(float); cl = d[f"{c}__cline"]
+        mask = cl == "LNCAPCLONEFGC_PROSTATE"
+        Xw = X[mask]; totw = tot[mask]
+        mdm2 = Xw[:, gi["MDM2"]]; cdkn1a = Xw[:, gi["CDKN1A"]]
+        proxy = Xw[:, [gi[g] for g in NORM_PROXY]].astype(float)
+        real = np.zeros((len(NORM_LEVELS), 2))
+        for i, lv in enumerate(NORM_LEVELS):
+            marg, x, y = _norm_pair(mdm2, cdkn1a, totw, lv)
+            if lv == "raw":
+                z = proxy
+            elif lv == "log1p":
+                z = np.log1p(proxy)
+            else:
+                z = np.log1p(proxy * (1e4 / np.maximum(totw, 1.0))[:, None])
+            real[i] = [marg, D.partial_corr(x, y, z.mean(axis=1))]
+        out["real"] = real
+        out["real_n"] = np.array([int(mask.sum())])
+    except FileNotFoundError:
+        pass
+    for i, lv in enumerate(NORM_LEVELS):
+        s = out.get("syn"); r = out.get("real")
+        print(f"[norm {lv:6s}] syn marg={s[i,0]:+.3f} partial={s[i,1]:+.3f} | "
+              f"real marg={r[i,0]:+.3f} partial={r[i,1]:+.3f}")
+    return out
+
+
+def plot_normalization(N):
+    plotstyle.apply()
+    fig, axs = plt.subplots(1, 2, figsize=(15, 6.2))
+    x = np.arange(len(NORM_LEVELS)); w = 0.38
+    labs = [NORM_LABEL[l] for l in NORM_LEVELS]
+
+    def _panel(ax, data, title, clean=None):
+        ax.bar(x - w/2, data[:, 0], w, color='C0', label='marginal correlation')
+        ax.bar(x + w/2, data[:, 1], w, color='C3', label='partial | p53 (regulation)')
+        if clean is not None:
+            ax.axhline(clean[0], color='C0', ls=':', lw=2.0, label='clean marginal')
+            ax.axhline(clean[1], color='C3', ls=':', lw=2.0, label='clean partial (~0)')
+        ax.axhline(0, color='k', lw=0.6)
+        ax.set_xticks(x); ax.set_xticklabels(labs, fontsize=11)
+        ax.set_ylabel('correlation'); ax.set_ylim(-0.1, 0.72)
+        ax.set_title(title, fontsize=13); ax.legend(fontsize=9); ax.grid(alpha=.3, axis='y')
+        for xi in x:
+            for off, col in ((-w/2, 0), (w/2, 1)):
+                v = data[xi, col]
+                ax.text(xi + off, v + (0.015 if v >= 0 else -0.015), f'{v:+.2f}',
+                        ha='center', va='bottom' if v >= 0 else 'top', fontsize=9)
+
+    if 'syn' in N:
+        _panel(axs[0], N['syn'],
+               f"(A) Splatter-noised SYNTHETIC (n={int(N['syn_n'][0])})\n"
+               "normalization lets conditioning recover the truth",
+               clean=N.get('syn_clean'))
+    if 'real' in N:
+        _panel(axs[1], N['real'],
+               f"(B) REAL idasanutlin, LNCaP (n={int(N['real_n'][0])})\n"
+               "normalization lowers both, but partial stays high")
+    fig.suptitle("Does library-size normalization remove the residual partial correlation?\n"
+                 "conditioning on p53 should drive partial to zero if the residual is technical (library size)",
+                 fontsize=14)
+    fig.tight_layout(rect=[0, 0, 1, 0.90])
+    fig.savefig(str(FIG / "fig_step9_normalization.png"), dpi=120)
+    print("Saved fig_step9_normalization.png")
 
 
 def compute():
@@ -223,6 +350,8 @@ def main():
         if 'snapshot_splatter_zero_rates' in s3:
             D_['fork3_snapshot_splatter_zero_rates'] = s3['snapshot_splatter_zero_rates']
     plot(D_)
+    N = load_or_compute(DATA / "cache_step9_norm.npz", normalization_effect)
+    plot_normalization(N)
 
 
 if __name__ == "__main__":

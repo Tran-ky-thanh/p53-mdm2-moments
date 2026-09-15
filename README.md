@@ -43,6 +43,8 @@ binds the p53-pocket of MDM2, blocks MDM2→p53 degradation, so p53 **accumulate
    Patterns2021 visualization (snapshot scatter + smoothed display of raw cached moment time courses).
 5. **step5** – add simple dropout noise and compare Pearson / MI / HSIC / dCor.
 6. **step6** – **published Splatter noise** + Pearson/MI/HSIC/**dCor** + permutation tests.
+6b. **step6b** – **preprocessing** (QC filter / CP10k / log1p / depth regression) against a
+   clean-count ground truth, with 300 background genes supplying a realistic library size.
 7. **step7 (a–e)** – **real scRNA-seq** (MIX-seq): load & QC (7a); DMSO vs Idasanutlin with negative
    controls + a WT/mutant 2×2 control (7b); 6 h vs 24 h timepoints (7c); the direct (TP53, MDM2) pair
    shown honestly to be weak on mRNA (7d); and the response across 22 cell lines, with marker area
@@ -100,6 +102,16 @@ subfolders `DMSO_6hr_expt1/` and `Idasanutlin_6hr_expt1/` (10x `matrix.mtx` + `g
 - Under realistic (Splatter) noise, **library-size** creates spurious gene–gene correlations that
   fool all the powerful measures (Pearson/HSIC/dCor); only the low-power kNN mutual-information
   estimator stays near zero. The real fix is **library-size normalization**, not the choice of statistic.
+- **Verified in step6b:** CP10k + log1p removes the false positive completely (Nutlin dCor
+  0.098 → 0.045 against a clean truth of 0.046; permutation z 3.0 → 0.5). It also removes most of
+  the *apparent* closed-loop detection — because that detection was mostly artefact to begin with.
+  After depth regression the kNN MI estimator, weakest on raw counts, becomes the only measure
+  still significant on the true signal (ties in UMI counts break the Kraskov estimator).
+- **On raw counts, more cells make it worse.** The truly-independent Nutlin condition climbs from
+  Fisher z = +3.9 (1.5k cells) to **+9.5 (12k cells)** while its correlation stays at r ≈ 0.09 —
+  the library-size artefact is a bias, not sampling noise, so a bigger experiment estimates it more
+  precisely. After CP10k the control stays at the null (z = +0.2 → −1.0) while the true closed-loop
+  signal grows to z = +3.6 at 12k cells. Normalize first; sample size is no substitute.
 - On **real** MIX-seq data, MDM2–CDKN1A co-expression appears **only in TP53-WT cells under
   Idasanutlin** (dCor 0.12→0.38), with a clean mutant-line negative control. (The direct TP53–MDM2 pair
   is weak because TP53 mRNA is a poor proxy for p53 activity.)

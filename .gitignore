@@ -20,8 +20,11 @@ data/cache_step*.npz
 # Compact Step 5 summary plus clean snapshots for adding measures without
 # rerunning the underlying Gillespie simulation.
 !data/cache_step5.npz
-# Compact moments and inferred networks for Figure 12's five-seed robustness analysis.
+# Compact moments and inferred networks for Figure 13's five-seed robustness analysis.
 !data/cache_step8_robust.npz
+# Compact preprocessing-comparison summaries for Figures 8-9 (scalars only, small).
+!data/cache_step6b.npz
+!data/cache_step6b_ncells.npz
 # NOTE: data/data_step7_panel*.npz ARE committed on purpose — they are compact extracts of the
 # MIX-seq real data and cannot be regenerated without the ~2 GB raw dataset (not shipped here).
 # figures/*.png and report/report.html ARE committed (they are the deliverables).
@@ -34,3 +37,6 @@ data/cache_step*.npz
 # OS
 .DS_Store
 Thumbs.db
+
+# Private / exploratory work (not for publication)
+private/
