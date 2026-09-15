@@ -40,3 +40,6 @@ Thumbs.db
 
 # Private / exploratory work (not for publication)
 private/
+
+# Optional manuscript panels (regenerate with analysis/manuscript_figure1_panels.py)
+figures/manuscript/

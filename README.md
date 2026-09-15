@@ -19,7 +19,6 @@ on both **synthetic** and **real** single-cell RNA-seq data.
 | **Vendored MBI** | `src/mbi/` — the original non-linear moment-based inference code (see `src/mbi/ATTRIBUTION.md`) |
 | **Analysis steps** | `analysis/step1..step9` |
 | **Outputs** | `figures/*.png`, `data/*.npz` |
-| **Manuscript figures** | `figures/manuscript/figure1A-E.*` — standalone high-resolution PNG/PDF panels derived from Results 4.1-4.4 |
 | **Docs / report** | `docs/theory.md`, `report/report.html` |
 
 ## The biology in one paragraph
